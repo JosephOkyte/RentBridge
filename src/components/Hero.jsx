@@ -1,68 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Calendar, MapPin, Building, Search, CheckCircle, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../data/properties';
+import { IMAGES } from '../utils/images';
 
-// 11 Comprehensive Placement Images across Nigerian Commercial & Residential Hubs
+// 9 Comprehensive Placement Images across Nigerian Commercial & Residential Hubs
 const HERO_SLIDES = [
   {
     id: 1,
-    image: '/images/hero-lagos-duplex.jpg',
+    image: IMAGES.heroLagosDuplex,
     city: 'Lagos',
     neighborhood: 'Lekki Phase 1',
     description: 'Contemporary 4-Bedroom Semi-Detached Duplex'
   },
   {
     id: 2,
-    image: '/images/hero_slider_ikoyi_apartment.jpg',
+    image: IMAGES.heroIkoyiApartment,
     city: 'Lagos',
     neighborhood: 'Ikoyi Waterfront',
     description: 'Luxury Serviced Apartments with Scenic Terraces'
   },
   {
     id: 3,
-    image: '/images/hero_slider_lekki_street_entrance.jpg',
+    image: IMAGES.heroLekkiEntrance,
     city: 'Lagos',
     neighborhood: 'Lekki Gated Estate',
     description: 'Secured Street Entrance, Boom Barrier & Paved Access'
   },
   {
     id: 4,
-    image: '/images/hero_slider_lagoon_waterfront.jpg',
+    image: IMAGES.heroLagoonWaterfront,
     city: 'Lagos',
     neighborhood: 'Victoria Island Lagoon',
     description: 'Upscale Waterfront Penthouse & Lounge Terrace'
   },
   {
     id: 5,
-    image: '/images/hero_slider_maitama_terrace.jpg',
+    image: IMAGES.heroMaitamaTerrace,
     city: 'Abuja',
     neighborhood: 'Maitama District',
     description: 'Executive Gated Terrace Residences'
   },
   {
     id: 6,
-    image: '/images/hero_slider_abuja_gwarinpa_plaza.jpg',
+    image: IMAGES.heroAbujaPlaza,
     city: 'Abuja',
     neighborhood: 'Gwarinpa Commercial Axis',
     description: 'Modern Retail Plaza & High-Footfall Boutique Spaces'
   },
   {
     id: 7,
-    image: '/images/hero_slider_ph_commercial.jpg',
+    image: IMAGES.heroPhCommercial,
     city: 'Port Harcourt',
     neighborhood: 'Peter Odili / Trans-Amadi',
     description: 'Modern Commercial Showrooms & Plaza Suites'
   },
   {
     id: 8,
-    image: '/images/hero_slider_ph_gra_duplex.jpg',
+    image: IMAGES.heroPhGraDuplex,
     city: 'Port Harcourt',
     neighborhood: 'Old GRA / GRA Phase 2',
     description: 'Executive Semi-Detached Duplex & Carport'
   },
   {
     id: 9,
-    image: '/images/hero_slider_enugu_mansion.jpg',
+    image: IMAGES.heroEnuguMansion,
     city: 'Enugu',
     neighborhood: 'Independence Layout',
     description: 'Prime Contemporary Residential Compound'
@@ -77,18 +78,20 @@ export default function Hero({
   onSearchings
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   // Touch swipe coordinates for mobile gestures
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
-  // Auto-advance slideshow every 5 seconds
+  // Auto-advance slideshow every 5 seconds (pauses on hover)
   useEffect(() => {
+    if (isPaused) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isPaused, currentSlide]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
@@ -100,18 +103,19 @@ export default function Hero({
 
   // Mobile Touch Swipe Handlers
   const handleTouchStart = (e) => {
-    setTouchStartX(e.targetTouches[0].clientX);
-    setTouchEndX(e.targetTouches[0].clientX);
+    touchStartX.current = e.targetTouches[0].clientX;
+    touchEndX.current = e.targetTouches[0].clientX;
   };
 
   const handleTouchMove = (e) => {
-    setTouchEndX(e.targetTouches[0].clientX);
+    touchEndX.current = e.targetTouches[0].clientX;
   };
 
   const handleTouchEnd = () => {
-    if (touchStartX - touchEndX > 45) {
+    const distance = touchStartX.current - touchEndX.current;
+    if (distance > 45) {
       nextSlide(); // Swipe left -> Next
-    } else if (touchStartX - touchEndX < -45) {
+    } else if (distance < -45) {
       prevSlide(); // Swipe right -> Previous
     }
   };
@@ -122,27 +126,30 @@ export default function Hero({
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
       className="relative overflow-hidden pt-8 pb-16 sm:pt-14 sm:pb-24 lg:pt-18 lg:pb-28 bg-[#151816] text-white select-none">
       
-      {/* Background Slideshow: Prominent, clear visibility */}
+      {/* Background Slideshow: Real Smooth Horizontal Sliding Track */}
       <div className="absolute inset-0 z-0 overflow-hidden">
-        {HERO_SLIDES.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentSlide ? 'opacity-85' : 'opacity-0 pointer-events-none'
-            }`}>
-            <img
-              src={slide.image}
-              alt={slide.description}
-              className="w-full h-full object-cover object-center transform scale-105 transition-transform duration-7000 ease-out"
-            />
-          </div>
-        ))}
+        <div 
+          className="flex h-full w-full transition-transform duration-700 ease-out will-change-transform"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+          {HERO_SLIDES.map((slide) => (
+            <div key={slide.id} className="relative w-full h-full flex-shrink-0">
+              <img
+                src={slide.image}
+                alt={slide.description}
+                loading="eager"
+                className="w-full h-full object-cover object-center transform scale-100 transition-transform duration-5000 ease-out"
+              />
+            </div>
+          ))}
+        </div>
 
-        {/* Balanced cinematic gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#151816]/80 via-[#151816]/50 to-[#151816]/95"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#151816]/35 to-[#151816]/85"></div>
+        {/* Cinematic contrast overlay: keeps photos richly visible while ensuring text pops */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#151816]/75 via-[#151816]/40 to-[#151816]/90 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[#151816]/20 pointer-events-none"></div>
       </div>
 
       {/* Slide Navigation Arrows (Visible on Mobile & Desktop) */}
@@ -186,7 +193,7 @@ export default function Hero({
           </h1>
 
           {/* Subtitle */}
-          <p className="text-sm sm:text-base lg:text-lg text-[#E2D7C8] leading-relaxed max-w-3xl mx-auto font-normal px-2 sm:px-0">
+          <p className="text-sm sm:text-base lg:text-lg text-[#E2D7C8] leading-relaxed max-w-3xl mx-auto font-normal px-2 sm:px-0 drop-shadow">
             No street agents. No exorbitant 10% agency cuts. No ₦5,000 inspection fees. Connect with verified property owners, caretakers, and legal custodians across 
             <strong className="text-white font-semibold"> Lagos, Abuja, Port Harcourt,</strong> and <strong className="text-white font-semibold">Enugu</strong>.
           </p>

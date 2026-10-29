@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, Upload, Building, UserCheck, Scale, KeyRound, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2, Camera, Compass } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../data/properties';
+import { IMAGES } from '../utils/images';
 
 export default function ListPropertyModal({ isOpen, onClose }) {
   const [listerRole, setListerRole] = useState('landlord');
@@ -80,15 +81,15 @@ export default function ListPropertyModal({ isOpen, onClose }) {
         ];
 
     const sampleImages = [
-      '/images/hero-lagos-duplex.jpg',
-      '/images/commercial-abuja-boutique.jpg',
-      '/images/industrial-warehouse.jpg',
-      '/images/interior-living-room.jpg',
-      '/images/hero_slider_ikoyi_apartment.jpg',
-      '/images/hero_slider_maitama_terrace.jpg',
-      '/images/hero_slider_ph_commercial.jpg',
-      '/images/hero_slider_enugu_mansion.jpg',
-      '/images/hero_slider_lagoon_waterfront.jpg'
+      IMAGES.heroLagosDuplex,
+      IMAGES.commercialAbujaBoutique,
+      IMAGES.industrialWarehouse,
+      IMAGES.interiorLivingRoom,
+      IMAGES.heroIkoyiApartment,
+      IMAGES.heroMaitamaTerrace,
+      IMAGES.heroPhCommercial,
+      IMAGES.heroEnuguMansion,
+      IMAGES.heroLagoonWaterfront
     ];
 
     const generatedSet = sampleLabels.map((label, idx) => ({

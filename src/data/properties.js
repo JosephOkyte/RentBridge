@@ -1,3 +1,5 @@
+import { IMAGES } from '../utils/images';
+
 export const CITIES = [
   { id: 'all', name: 'All Cities' },
   { id: 'lagos', name: 'Lagos', center: [6.5244, 3.3792], zoom: 12 },
@@ -38,7 +40,7 @@ export const PROPERTIES = [
     bedrooms: 4,
     bathrooms: 5,
     size: '420 sqm',
-    image: '/images/hero-lagos-duplex.jpg',
+    image: IMAGES.heroLagosDuplex,
     lister: {
       type: 'landlord',
       name: 'Engr. Dapo Alabi (Owner)',
@@ -75,7 +77,7 @@ export const PROPERTIES = [
     bedrooms: 0,
     bathrooms: 2,
     size: '95 sqm',
-    image: '/images/commercial-abuja-boutique.jpg',
+    image: IMAGES.commercialAbujaBoutique,
     lister: {
       type: 'lawyer',
       name: 'Barrister Nkechi Umeh (NBA Reg #48291)',
@@ -112,7 +114,7 @@ export const PROPERTIES = [
     bedrooms: 0,
     bathrooms: 4,
     size: '1,250 sqm',
-    image: '/images/industrial-warehouse.jpg',
+    image: IMAGES.industrialWarehouse,
     lister: {
       type: 'caretaker',
       name: 'Mallam Haruna Bello (Head Custodian)',
@@ -149,7 +151,7 @@ export const PROPERTIES = [
     bedrooms: 2,
     bathrooms: 3,
     size: '160 sqm',
-    image: '/images/interior-living-room.jpg',
+    image: IMAGES.interiorLivingRoom,
     lister: {
       type: 'landlord',
       name: 'Dr. (Mrs) Amina Bello (Owner)',
@@ -186,7 +188,7 @@ export const PROPERTIES = [
     bedrooms: 3,
     bathrooms: 4,
     size: '220 sqm',
-    image: '/images/hero-lagos-duplex.jpg',
+    image: IMAGES.heroLagosDuplex,
     lister: {
       type: 'lawyer',
       name: 'Barrister Tonye Briggs (Legal Custodian)',
@@ -223,7 +225,7 @@ export const PROPERTIES = [
     bedrooms: 0,
     bathrooms: 3,
     size: '140 sqm',
-    image: '/images/commercial-abuja-boutique.jpg',
+    image: IMAGES.commercialAbujaBoutique,
     lister: {
       type: 'caretaker',
       name: 'Mr. Babatunde Jinadu (Property Manager)',
@@ -260,7 +262,7 @@ export const PROPERTIES = [
     bedrooms: 3,
     bathrooms: 3,
     size: '280 sqm',
-    image: '/images/hero-lagos-duplex.jpg',
+    image: IMAGES.heroLagosDuplex,
     lister: {
       type: 'landlord',
       name: 'Chief Chukwudi Nwosu (Owner)',
@@ -297,7 +299,7 @@ export const PROPERTIES = [
     bedrooms: 0,
     bathrooms: 2,
     size: '850 sqm',
-    image: '/images/industrial-warehouse.jpg',
+    image: IMAGES.industrialWarehouse,
     lister: {
       type: 'lawyer',
       name: 'Barrister Olatunji Adeleke (Family Estate Attorney)',
@@ -334,7 +336,7 @@ export const PROPERTIES = [
     bedrooms: 2,
     bathrooms: 2,
     size: '140 sqm',
-    image: '/images/interior-living-room.jpg',
+    image: IMAGES.interiorLivingRoom,
     lister: {
       type: 'caretaker',
       name: 'Elder Samuel Adeleke (Resident Caretaker)',
