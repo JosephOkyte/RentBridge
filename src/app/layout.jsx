@@ -1,0 +1,36 @@
+import { ClerkProvider } from '@clerk/nextjs';
+import './globals.css';
+
+export const metadata = {
+  title: 'RentBridge | Bridging the Gap Between Landlords and Tenants in Nigeria',
+  description: 'Nigeria\'s verified direct rental marketplace connecting tenants directly with landlords, caretakers, and legal custodians. ₦0 viewing fees and 0% agency cuts across Lagos, Abuja, Port Harcourt, and Enugu.',
+  icons: {
+    icon: '/favicon.svg',
+  },
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <ClerkProvider>
+      <html lang="en">
+        <head>
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+          <link
+            href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+          />
+          <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            crossOrigin=""
+          />
+        </head>
+        <body className="min-h-screen bg-[#FBF9F5] text-[#151816] font-['Plus_Jakarta_Sans',sans-serif] antialiased">
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
+  );
+}

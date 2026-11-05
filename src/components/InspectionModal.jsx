@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { X, Calendar, Clock, ShieldCheck, CheckCircle2, User, Phone, AlertCircle, Send } from 'lucide-react';
 import { formatNaira } from '../utils/formatters';
 
 export default function InspectionModal({ property, onClose }) {
+  const { user } = useUser();
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -12,6 +16,17 @@ export default function InspectionModal({ property, onClose }) {
     notes: ''
   });
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.fullName || user.firstName || prev.fullName,
+        email: user.primaryEmailAddress?.emailAddress || prev.email,
+        phone: user.primaryPhoneNumber?.phoneNumber || prev.phone,
+      }));
+    }
+  }, [user]);
 
   if (!property) return null;
 

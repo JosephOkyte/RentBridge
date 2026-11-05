@@ -1,7 +1,12 @@
+'use client';
+
 import React, { useState } from 'react';
-import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info } from 'lucide-react';
+import Link from 'next/link';
+import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
+import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info, User } from 'lucide-react';
 
 export default function Navbar({ onOpenListModal, onNavigateToSection }) {
+  const { isSignedIn, isLoaded } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -13,7 +18,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
           {/* Logo & Tagline */}
           <div 
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer shrink-0" 
-            onClick={() => onNavigateToSection('hero')}>
+            onClick={() => onNavigateToSection ? onNavigateToSection('hero') : null}>
             <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-[#2D5A43] flex items-center justify-center text-[#FBF9F5] shadow-md shadow-[#2D5A43]/20">
               <svg className="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 13V11C3 7.68629 5.68629 5 9 5H15C18.3137 5 21 7.68629 21 11V13M3 13H21M3 13V19M21 13V19M8 13V19M16 13V19" />
@@ -45,15 +50,49 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             </button>
 
             <button
-              onClick={() => onNavigateToSection('properties')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#2D5A43] hover:bg-[#1E3F2F] text-[#FBF9F5] transition-all shadow-md shadow-[#2D5A43]/25 cursor-pointer">
+              onClick={() => onNavigateToSection ? onNavigateToSection('properties') : null}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#2D5A43] hover:bg-[#1E3F2F] text-[#FBF9F5] transition-all shadow-md shadow-[#2D5A43]/25 cursor-pointer">
               <span>Find Rent</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            {/* Clerk Authentication Controls */}
+            <div className="pl-2 border-l border-[#E8DFC8]">
+              {isLoaded && !isSignedIn && (
+                <SignInButton mode="modal">
+                  <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#2D5A43] hover:bg-[#EBF2ED] transition-all cursor-pointer">
+                    <User className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </button>
+                </SignInButton>
+              )}
+              {isLoaded && isSignedIn && (
+                <div className="flex items-center gap-2">
+                  <UserButton 
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: 'w-9 h-9 ring-2 ring-[#2D5A43]/30',
+                      },
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Action CTAs (Mobile) */}
           <div className="sm:hidden flex items-center gap-2">
+            {isLoaded && !isSignedIn && (
+              <SignInButton mode="modal">
+                <button className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#2D5A43] bg-[#EBF2ED] border border-[#2D5A43]/20">
+                  Sign In
+                </button>
+              </SignInButton>
+            )}
+            {isLoaded && isSignedIn && (
+              <UserButton afterSignOutUrl="/" />
+            )}
             <button
               onClick={onOpenListModal}
               className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2D5A43] text-white shadow-sm flex items-center gap-1 active:scale-95 transition-transform">
@@ -73,35 +112,35 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
         <div className="py-2.5 border-t border-[#E8DFC8]/70 flex items-center justify-start lg:justify-center overflow-x-auto no-scrollbar scroll-smooth">
           <nav className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button 
-              onClick={() => onNavigateToSection('properties')} 
+              onClick={() => onNavigateToSection ? onNavigateToSection('properties') : null} 
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#151816] bg-[#F5EFEB] hover:bg-white hover:text-[#2D5A43] active:bg-[#2D5A43] active:text-white border border-[#E8DFC8] transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
               <Home className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span>Vacancies</span>
             </button>
 
             <button 
-              onClick={() => onNavigateToSection('map-explorer')} 
+              onClick={() => onNavigateToSection ? onNavigateToSection('map-explorer') : null} 
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#151816] bg-[#F5EFEB] hover:bg-white hover:text-[#2D5A43] active:bg-[#2D5A43] active:text-white border border-[#E8DFC8] transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
               <MapPin className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span>Google Map</span>
             </button>
 
             <button 
-              onClick={() => onNavigateToSection('verification-process')} 
+              onClick={() => onNavigateToSection ? onNavigateToSection('verification-process') : null} 
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#151816] bg-[#F5EFEB] hover:bg-white hover:text-[#2D5A43] active:bg-[#2D5A43] active:text-white border border-[#E8DFC8] transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
               <ShieldCheck className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span>Verification</span>
             </button>
 
             <button 
-              onClick={() => onNavigateToSection('savings-calculator')} 
+              onClick={() => onNavigateToSection ? onNavigateToSection('savings-calculator') : null} 
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#151816] bg-[#F5EFEB] hover:bg-white hover:text-[#2D5A43] active:bg-[#2D5A43] active:text-white border border-[#E8DFC8] transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
               <Calculator className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span>Fee Calculator</span>
             </button>
 
             <button 
-              onClick={() => onNavigateToSection('about')} 
+              onClick={() => onNavigateToSection ? onNavigateToSection('about') : null} 
               className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#151816] bg-[#F5EFEB] hover:bg-white hover:text-[#2D5A43] active:bg-[#2D5A43] active:text-white border border-[#E8DFC8] transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
               <Info className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span>About RentBridge</span>
@@ -112,15 +151,15 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="sm:hidden bg-[#FBF9F5] border-t border-[#E8DFC8] px-4 pt-3 pb-6 space-y-2 shadow-xl animate-fadeIn">
+        <div className="sm:hidden bg-[#FBF9F5] border-t border-[#E8DFC8] px-4 pt-3 pb-6 space-y-2 shadow-xl">
           <button 
-            onClick={() => { onNavigateToSection('properties'); setMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateToSection) onNavigateToSection('properties'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center gap-2.5">
             <Home className="w-4 h-4 text-[#2D5A43]" />
             <span>Browse All Vacancies</span>
           </button>
           <button 
-            onClick={() => { onNavigateToSection('map-explorer'); setMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateToSection) onNavigateToSection('map-explorer'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center justify-between">
             <span className="flex items-center gap-2.5">
               <MapPin className="w-4 h-4 text-[#2D5A43]" />
@@ -129,7 +168,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             <span className="text-[10px] font-extrabold bg-[#2D5A43] text-white px-2 py-0.5 rounded-full">4 Cities</span>
           </button>
           <button 
-            onClick={() => { onNavigateToSection('verification-process'); setMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateToSection) onNavigateToSection('verification-process'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center justify-between">
             <span className="flex items-center gap-2.5">
               <ShieldCheck className="w-4 h-4 text-[#2D5A43]" />
@@ -137,13 +176,13 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             </span>
           </button>
           <button 
-            onClick={() => { onNavigateToSection('savings-calculator'); setMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateToSection) onNavigateToSection('savings-calculator'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center gap-2.5">
             <Calculator className="w-4 h-4 text-[#2D5A43]" />
             <span>Agent Fee Savings Calculator</span>
           </button>
           <button 
-            onClick={() => { onNavigateToSection('about'); setMobileMenuOpen(false); }}
+            onClick={() => { if (onNavigateToSection) onNavigateToSection('about'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center gap-2.5">
             <Info className="w-4 h-4 text-[#2D5A43]" />
             <span>About RentBridge</span>

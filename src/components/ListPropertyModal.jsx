@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
-import { X, ShieldCheck, Upload, Building, UserCheck, Scale, KeyRound, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2, Camera, Compass } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useUser } from '@clerk/nextjs';
+import { X, ShieldCheck, Upload, Building, UserCheck, Scale, KeyRound, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2, Camera, Compass, BookmarkCheck } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../data/properties';
 import { IMAGES } from '../utils/images';
 
 export default function ListPropertyModal({ isOpen, onClose }) {
+  const { user } = useUser();
   const [listerRole, setListerRole] = useState('landlord');
   const [submitted, setSubmitted] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
   const [formData, setFormData] = useState({
@@ -23,6 +28,22 @@ export default function ListPropertyModal({ isOpen, onClose }) {
     nbaNumber: '',
     caretakerAuthLetter: null,
   });
+
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: user.fullName || user.firstName || prev.fullName,
+        email: user.primaryEmailAddress?.emailAddress || prev.email,
+        phone: user.primaryPhoneNumber?.phoneNumber || prev.phone,
+      }));
+    }
+  }, [user]);
+
+  const handleSaveDraft = (e) => {
+    e.preventDefault();
+    setDraftSaved(true);
+  };
 
   // Photo uploads state
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
@@ -137,7 +158,40 @@ export default function ListPropertyModal({ isOpen, onClose }) {
           </button>
         </div>
 
-        {submitted ? (
+        {draftSaved ? (
+          <div className="p-8 text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-[#EBF2ED] text-[#2D5A43] flex items-center justify-center mx-auto">
+              <BookmarkCheck className="w-10 h-10" />
+            </div>
+            <h4 className="text-2xl font-extrabold text-[#151816]">Listing Saved as Draft!</h4>
+            <p className="text-sm text-[#4B524D] leading-relaxed max-w-md mx-auto">
+              Your property details and <strong className="text-[#2D5A43]">{uploadedPhotos.length} photos</strong> have been saved securely.
+            </p>
+
+            <div className="p-4 bg-white rounded-2xl border border-[#E8DFC8] text-xs text-left space-y-2 max-w-md mx-auto">
+              <p className="font-bold text-[#151816]">Photo Quota Status:</p>
+              <p className="text-[#4B524D]">
+                {uploadedPhotos.length} of {minRequiredPhotos} photos uploaded ({photosRemaining > 0 ? `${photosRemaining} more needed before submitting for verification` : 'Quota met!'}).
+              </p>
+              <p className="text-[#8F8372]">
+                Take your time capturing the street length, entrance gate, and interior. Your listing remains private and hidden until submitted and manually approved by our verification desk.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => setDraftSaved(false)}
+                className="px-5 py-2.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] text-xs font-bold border border-[#D7CBBB] cursor-pointer">
+                Continue Editing
+              </button>
+              <button
+                onClick={onClose}
+                className="px-6 py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-md cursor-pointer">
+                Done & Close
+              </button>
+            </div>
+          </div>
+        ) : submitted ? (
           <div className="p-8 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-[#EBF2ED] text-[#2D5A43] flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10" />
@@ -522,11 +576,18 @@ export default function ListPropertyModal({ isOpen, onClose }) {
               </p>
             </div>
 
-            {/* Submit */}
-            <div className="pt-2">
+            {/* Actions: Save as Draft vs Submit for Verification */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] text-xs font-bold border border-[#D7CBBB] transition-all cursor-pointer">
+                Save as Draft
+              </button>
+
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-md transition-all cursor-pointer">
+                className="w-full sm:w-2/3 py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-md transition-all cursor-pointer">
                 Submit Property & Photos for Verification
               </button>
             </div>

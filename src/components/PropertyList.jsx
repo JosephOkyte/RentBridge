@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { ShieldCheck, MapPin, BedDouble, Bath, Maximize2, Calendar, Phone, ArrowUpRight, CheckCircle2, UserCheck, Scale, KeyRound, Filter } from 'lucide-react';
 import { CITIES, CATEGORIES, LISTER_TYPES, PROPERTIES } from '../data/properties';

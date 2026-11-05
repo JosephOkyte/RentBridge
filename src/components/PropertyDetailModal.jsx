@@ -1,8 +1,12 @@
+'use client';
+
 import React, { useState } from 'react';
-import { X, ShieldCheck, MapPin, BedDouble, Bath, Maximize2, Calendar, Phone, CheckCircle, ExternalLink, AlertTriangle, ArrowRight, DollarSign } from 'lucide-react';
+import { useUser, SignInButton } from '@clerk/nextjs';
+import { X, ShieldCheck, MapPin, BedDouble, Bath, Maximize2, Calendar, Phone, CheckCircle, ExternalLink, AlertTriangle, ArrowRight, DollarSign, Lock } from 'lucide-react';
 import { formatNaira, calculateTraditionalCosts } from '../utils/formatters';
 
 export default function PropertyDetailModal({ property, onClose, onBookInspection }) {
+  const { isSignedIn } = useUser();
   if (!property) return null;
 
   const savings = calculateTraditionalCosts(property.priceYearly);
@@ -14,139 +18,117 @@ export default function PropertyDetailModal({ property, onClose, onBookInspectio
         {/* Sticky Modal Header */}
         <div className="p-4 sm:p-5 bg-white border-b border-[#E8DFC8] flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#1E3F2F] text-[#8AE0B3] flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              {property.lister.roleBadge}
+            <span className="px-2.5 py-1 rounded-lg bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold uppercase tracking-wider">
+              {property.propertyKind}
             </span>
-            <span className="text-xs text-[#8F8372] hidden sm:inline font-semibold">
-              {property.cityName} • {property.neighborhood}
+            <span className="text-xs font-semibold text-[#8F8372]">
+              ID: {property.id}
             </span>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-[#F5EFEB] text-[#151816] transition-colors">
+            className="w-8 h-8 rounded-full bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#151816] flex items-center justify-center transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto p-5 sm:p-8 space-y-8">
+        <div className="p-6 overflow-y-auto space-y-6">
           
-          {/* Main Visual Banner */}
-          <div className="relative rounded-2xl overflow-hidden h-72 sm:h-96 w-full shadow-md">
+          {/* Main Visual */}
+          <div className="relative h-64 sm:h-96 rounded-2xl overflow-hidden shadow-inner">
             <img
               src={property.image}
               alt={property.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
-
-            <div className="absolute bottom-4 left-4 right-4 text-white">
-              <span className="px-2.5 py-1 rounded-md bg-[#2D5A43] text-xs font-bold uppercase tracking-wider">
-                {property.propertyKind}
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold mt-1 text-white leading-tight">
-                {property.title}
-              </h2>
-              <p className="text-xs sm:text-sm text-white/90 flex items-center gap-1.5 mt-1">
-                <MapPin className="w-4 h-4 text-[#8AE0B3]" />
-                {property.address}
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Specs Pill Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {property.bedrooms > 0 && (
-              <div className="p-3 bg-white rounded-xl border border-[#E8DFC8] text-center">
-                <p className="text-xs text-[#8F8372] font-semibold">Bedrooms</p>
-                <p className="text-base font-extrabold text-[#151816]">{property.bedrooms} En-suite</p>
-              </div>
-            )}
-            {property.bathrooms > 0 && (
-              <div className="p-3 bg-white rounded-xl border border-[#E8DFC8] text-center">
-                <p className="text-xs text-[#8F8372] font-semibold">Bathrooms</p>
-                <p className="text-base font-extrabold text-[#151816]">{property.bathrooms} Baths</p>
-              </div>
-            )}
-            <div className="p-3 bg-white rounded-xl border border-[#E8DFC8] text-center">
-              <p className="text-xs text-[#8F8372] font-semibold">Total Area</p>
-              <p className="text-base font-extrabold text-[#151816]">{property.size}</p>
-            </div>
-            <div className="p-3 bg-white rounded-xl border border-[#E8DFC8] text-center">
-              <p className="text-xs text-[#8F8372] font-semibold">Middleman Commission</p>
-              <p className="text-base font-extrabold text-[#2D5A43]">₦0 (Zero)</p>
-            </div>
-          </div>
-
-          {/* Payment Terms & Pricing Structure */}
-          <div className="bg-white p-6 rounded-2xl border border-[#E2D7C8] space-y-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E8DFC8] pb-4">
-              <div>
-                <h3 className="text-lg font-bold text-[#151816]">Rent Payment Schedule</h3>
-                <p className="text-xs text-[#4B524D]">Direct annual lease agreement:</p>
-              </div>
-
-              <span className="px-3.5 py-1.5 rounded-xl bg-[#EBF2ED] text-[#2D5A43] border border-[#8AE0B3]/50 text-xs font-bold self-start sm:self-auto">
-                Annual Lease Terms Only
-              </span>
-            </div>
-
-            {/* Cost Breakdown Table */}
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between items-center py-1">
-                <span className="text-[#4B524D]">
-                  Annual Rent Due:
-                </span>
-                <span className="text-xl font-extrabold text-[#151816]">
-                  {formatNaira(property.priceYearly)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-t border-[#E8DFC8]/60">
-                <span className="text-[#4B524D]">Caution Deposit (100% Refundable):</span>
-                <span className="font-semibold text-[#151816]">{formatNaira(property.cautionDeposit)}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-t border-[#E8DFC8]/60">
-                <span className="text-[#4B524D]">Service Charge / Estate Maintenance:</span>
-                <span className="font-semibold text-[#151816]">{formatNaira(property.serviceCharge)}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-t border-[#E8DFC8]/60 text-[#2D5A43]">
-                <span className="font-bold">Traditional Agent Fee (10%):</span>
-                <span className="font-extrabold">₦0 (WAIVED DIRECT)</span>
-              </div>
-            </div>
-
-            {/* Savings Callout Banner */}
-            <div className="p-3.5 bg-[#EBF2ED] rounded-xl border border-[#8AE0B3]/50 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-[#2D5A43]" />
-                <span className="font-bold text-[#1E3F2F]">
-                  You save over {formatNaira(savings.totalSaved)} in unnecessary agent & legal markups!
-                </span>
-              </div>
-              <span className="bg-[#2D5A43] text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                Direct Deal
+            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3.5 py-1.5 rounded-xl border border-[#E8DFC8] shadow-sm flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#2D5A43]" />
+              <span className="text-xs font-extrabold text-[#151816]">
+                {property.lister.roleBadge}
               </span>
             </div>
           </div>
 
-          {/* Description & Amenities */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-[#151816]">Property Overview</h3>
-            <p className="text-sm text-[#4B524D] leading-relaxed">
+          {/* Title & Location */}
+          <div className="space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-[#151816]">
+              {property.title}
+            </h2>
+            <div className="flex items-center gap-2 text-sm text-[#4B524D]">
+              <MapPin className="w-4 h-4 text-[#2D5A43] shrink-0" />
+              <span>{property.address}</span>
+            </div>
+          </div>
+
+          {/* Quick Property Metrics */}
+          <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-[#F5EFEB] border border-[#E8DFC8] text-center">
+            <div>
+              <p className="text-[11px] font-bold text-[#8F8372] uppercase tracking-wider">Bedrooms</p>
+              <p className="text-lg font-black text-[#151816] mt-0.5">{property.bedrooms || 'Studio/Open'}</p>
+            </div>
+            <div className="border-x border-[#E2D7C8]">
+              <p className="text-[11px] font-bold text-[#8F8372] uppercase tracking-wider">Bathrooms</p>
+              <p className="text-lg font-black text-[#151816] mt-0.5">{property.bathrooms || 'En-suite'}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-[#8F8372] uppercase tracking-wider">Total Area</p>
+              <p className="text-lg font-black text-[#151816] mt-0.5">{property.size}</p>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <h3 className="font-extrabold text-sm text-[#151816] uppercase tracking-wider">Direct Description</h3>
+            <p className="text-sm text-[#4B524D] leading-relaxed bg-white p-4 rounded-2xl border border-[#E8DFC8]">
               {property.description}
             </p>
+          </div>
 
-            <div className="pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#8F8372] mb-3">Key Amenities & Standards</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {property.features.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs font-medium text-[#252926] bg-white p-2.5 rounded-xl border border-[#E8DFC8]">
-                    <CheckCircle className="w-4 h-4 text-[#2D5A43] shrink-0" />
-                    <span>{feat}</span>
-                  </div>
-                ))}
+          {/* Amenities & Verification Checklist */}
+          <div className="space-y-3">
+            <h3 className="font-extrabold text-sm text-[#151816] uppercase tracking-wider">Verified Property Features</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {property.features.map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-white px-3.5 py-2.5 rounded-xl border border-[#E8DFC8] text-xs font-semibold text-[#151816]">
+                  <CheckCircle className="w-4 h-4 text-[#2D5A43] shrink-0" />
+                  <span>{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Rent Breakdown & Savings Highlight */}
+          <div className="p-5 rounded-2xl bg-[#EBF2ED] border border-[#2D5A43]/20 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-[#2D5A43] uppercase tracking-wider">Transparent Annual Terms</span>
+                <p className="text-2xl font-black text-[#151816]">
+                  {formatNaira(property.priceYearly)}
+                  <span className="text-xs font-normal text-[#4B524D] ml-1">/ year</span>
+                </p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-bold text-[#2D5A43] uppercase tracking-wider">Zero Agency Markup</span>
+                <p className="text-lg font-extrabold text-[#2D5A43]">
+                  Save ~{formatNaira(savings.totalSaved)}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-[#2D5A43]/20 text-xs text-[#333]">
+              <div className="bg-white/80 p-2.5 rounded-lg border border-[#2D5A43]/10">
+                <span className="text-[#8F8372] block text-[10px]">Caution Deposit:</span>
+                <span className="font-bold text-[#151816]">{formatNaira(property.cautionDeposit)}</span>
+              </div>
+              <div className="bg-white/80 p-2.5 rounded-lg border border-[#2D5A43]/10">
+                <span className="text-[#8F8372] block text-[10px]">Service Charge:</span>
+                <span className="font-bold text-[#151816]">{formatNaira(property.serviceCharge)}</span>
+              </div>
+              <div className="bg-white/80 p-2.5 rounded-lg border border-[#2D5A43]/10">
+                <span className="text-[#8F8372] block text-[10px]">Agency / Legal Fee:</span>
+                <span className="font-bold text-[#2D5A43]">₦0 (Zero)</span>
               </div>
             </div>
           </div>
@@ -189,7 +171,7 @@ export default function PropertyDetailModal({ property, onClose, onBookInspectio
 
         </div>
 
-        {/* Modal Sticky Footer Actions */}
+        {/* Modal Sticky Footer Actions with Clerk Auth Gate */}
         <div className="p-4 sm:p-5 bg-white border-t border-[#E8DFC8] flex flex-col sm:flex-row items-center justify-between gap-3 sticky bottom-0 z-10">
           <div>
             <p className="text-xs text-[#8F8372]">Direct Price:</p>
@@ -202,24 +184,44 @@ export default function PropertyDetailModal({ property, onClose, onBookInspectio
           </div>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <a
-              href={`https://wa.me/${property.lister.whatsapp}?text=Hello%20${encodeURIComponent(property.lister.name)},%20I%20am%20interested%20in%20inspecting%20the%20${encodeURIComponent(property.title)}%20listed%20on%20RentBridge.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-2 border border-[#D7CBBB]">
-              <Phone className="w-4 h-4 text-[#2D5A43]" />
-              <span>Direct WhatsApp</span>
-            </a>
+            {isSignedIn ? (
+              <>
+                <a
+                  href={`https://wa.me/${property.lister.whatsapp}?text=Hello%20${encodeURIComponent(property.lister.name)},%20I%20am%20interested%20in%20inspecting%20the%20${encodeURIComponent(property.title)}%20listed%20on%20RentBridge.`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-2 border border-[#D7CBBB]">
+                  <Phone className="w-4 h-4 text-[#2D5A43]" />
+                  <span>Direct WhatsApp ({property.lister.phone})</span>
+                </a>
 
-            <button
-              onClick={() => {
-                onClose();
-                onBookInspection(property);
-              }}
-              className="flex-1 sm:flex-initial px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md">
-              <Calendar className="w-4 h-4" />
-              <span>Book Free Inspection</span>
-            </button>
+                <button
+                  onClick={() => {
+                    onClose();
+                    onBookInspection(property);
+                  }}
+                  className="flex-1 sm:flex-initial px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer">
+                  <Calendar className="w-4 h-4" />
+                  <span>Book Free Inspection</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <SignInButton mode="modal">
+                  <button className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-2 border border-[#D7CBBB] cursor-pointer">
+                    <Lock className="w-4 h-4 text-[#2D5A43]" />
+                    <span>Sign In to Reveal Contact</span>
+                  </button>
+                </SignInButton>
+
+                <SignInButton mode="modal">
+                  <button className="flex-1 sm:flex-initial px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer">
+                    <Calendar className="w-4 h-4" />
+                    <span>Sign In to Book Inspection</span>
+                  </button>
+                </SignInButton>
+              </>
+            )}
           </div>
         </div>
 
@@ -227,4 +229,3 @@ export default function PropertyDetailModal({ property, onClose, onBookInspectio
     </div>
   );
 }
-

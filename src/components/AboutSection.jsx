@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { ShieldCheck, Building2, MapPin, Target, Sparkles, CheckCircle2, ArrowRight, HeartHandshake, Eye, Award } from 'lucide-react';
 

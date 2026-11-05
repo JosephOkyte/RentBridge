@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { Calculator, CheckCircle, TrendingDown, ShieldAlert, Sparkles, ArrowRight } from 'lucide-react';
 import { formatNaira, calculateTraditionalCosts } from '../utils/formatters';

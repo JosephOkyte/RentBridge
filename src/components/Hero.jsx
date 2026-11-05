@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck, Calendar, MapPin, Building, Search, CheckCircle, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../data/properties';
