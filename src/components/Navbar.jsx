@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
-import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info, User } from 'lucide-react';
+import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info, User, LayoutDashboard } from 'lucide-react';
 
 export default function Navbar({ onOpenListModal, onNavigateToSection }) {
   const { isSignedIn, isLoaded } = useUser();
@@ -68,6 +68,12 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
               )}
               {isLoaded && isSignedIn && (
                 <div className="flex items-center gap-2">
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#EBF2ED] text-[#2D5A43] hover:bg-[#2D5A43] hover:text-white transition-all cursor-pointer">
+                    <LayoutDashboard className="w-3.5 h-3.5" />
+                    <span>Dashboard</span>
+                  </Link>
                   <UserButton 
                     afterSignOutUrl="/"
                     appearance={{
@@ -152,6 +158,15 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="sm:hidden bg-[#FBF9F5] border-t border-[#E8DFC8] px-4 pt-3 pb-6 space-y-2 shadow-xl">
+          {isSignedIn && (
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#2D5A43] bg-[#EBF2ED] flex items-center gap-2.5">
+              <LayoutDashboard className="w-4 h-4" />
+              <span>My Management Dashboard</span>
+            </Link>
+          )}
           <button 
             onClick={() => { if (onNavigateToSection) onNavigateToSection('properties'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center gap-2.5">
