@@ -10,6 +10,7 @@ const HERO_SLIDES = [
   {
     id: 1,
     image: IMAGES.heroLagosDuplex,
+    fallback: '/images/hero-lagos-duplex.jpg',
     city: 'Lagos',
     neighborhood: 'Lekki Phase 1',
     description: 'Contemporary 4-Bedroom Semi-Detached Duplex'
@@ -17,6 +18,7 @@ const HERO_SLIDES = [
   {
     id: 2,
     image: IMAGES.heroIkoyiApartment,
+    fallback: '/images/hero_slider_ikoyi_apartment.jpg',
     city: 'Lagos',
     neighborhood: 'Ikoyi Waterfront',
     description: 'Luxury Serviced Apartments with Scenic Terraces'
@@ -24,6 +26,7 @@ const HERO_SLIDES = [
   {
     id: 3,
     image: IMAGES.heroLekkiEntrance,
+    fallback: '/images/hero_slider_lekki_street_entrance.jpg',
     city: 'Lagos',
     neighborhood: 'Lekki Gated Estate',
     description: 'Secured Street Entrance, Boom Barrier & Paved Access'
@@ -31,6 +34,7 @@ const HERO_SLIDES = [
   {
     id: 4,
     image: IMAGES.heroLagoonWaterfront,
+    fallback: '/images/hero_slider_lagoon_waterfront.jpg',
     city: 'Lagos',
     neighborhood: 'Victoria Island Lagoon',
     description: 'Upscale Waterfront Penthouse & Lounge Terrace'
@@ -38,6 +42,7 @@ const HERO_SLIDES = [
   {
     id: 5,
     image: IMAGES.heroMaitamaTerrace,
+    fallback: '/images/hero_slider_maitama_terrace.jpg',
     city: 'Abuja',
     neighborhood: 'Maitama District',
     description: 'Executive Gated Terrace Residences'
@@ -45,6 +50,7 @@ const HERO_SLIDES = [
   {
     id: 6,
     image: IMAGES.heroAbujaPlaza,
+    fallback: '/images/hero_slider_abuja_gwarinpa_plaza.jpg',
     city: 'Abuja',
     neighborhood: 'Gwarinpa Commercial Axis',
     description: 'Modern Retail Plaza & High-Footfall Boutique Spaces'
@@ -52,6 +58,7 @@ const HERO_SLIDES = [
   {
     id: 7,
     image: IMAGES.heroPhCommercial,
+    fallback: '/images/hero_slider_ph_commercial.jpg',
     city: 'Port Harcourt',
     neighborhood: 'Peter Odili / Trans-Amadi',
     description: 'Modern Commercial Showrooms & Plaza Suites'
@@ -59,6 +66,7 @@ const HERO_SLIDES = [
   {
     id: 8,
     image: IMAGES.heroPhGraDuplex,
+    fallback: '/images/hero_slider_ph_gra_duplex.jpg',
     city: 'Port Harcourt',
     neighborhood: 'Old GRA / GRA Phase 2',
     description: 'Executive Semi-Detached Duplex & Carport'
@@ -66,6 +74,7 @@ const HERO_SLIDES = [
   {
     id: 9,
     image: IMAGES.heroEnuguMansion,
+    fallback: '/images/hero_slider_enugu_mansion.jpg',
     city: 'Enugu',
     neighborhood: 'Independence Layout',
     description: 'Prime Contemporary Residential Compound'
@@ -132,26 +141,46 @@ export default function Hero({
       onMouseLeave={() => setIsPaused(false)}
       className="relative overflow-hidden pt-8 pb-16 sm:pt-14 sm:pb-24 lg:pt-18 lg:pb-28 bg-[#151816] text-white select-none">
       
-      {/* Background Slideshow: Real Smooth Horizontal Sliding Track */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div 
-          className="flex h-full w-full transition-transform duration-700 ease-out will-change-transform"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-          {HERO_SLIDES.map((slide) => (
-            <div key={slide.id} className="relative w-full h-full flex-shrink-0">
+      {/* Background Slideshow: Bulletproof Individual Slide Track with Zero Bleed */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#151816]">
+        {HERO_SLIDES.map((slide, index) => {
+          let offset = index - currentSlide;
+          // Wrap-around transitions for first <-> last slide
+          if (currentSlide === 0 && index === HERO_SLIDES.length - 1) {
+            offset = -1;
+          } else if (currentSlide === HERO_SLIDES.length - 1 && index === 0) {
+            offset = 1;
+          }
+
+          const isCurrent = index === currentSlide;
+          const isAdjacent = Math.abs(offset) <= 1;
+
+          return (
+            <div
+              key={slide.id}
+              className="absolute inset-0 w-full h-full transition-transform duration-700 ease-out will-change-transform"
+              style={{
+                transform: `translateX(${offset * 100}%)`,
+                visibility: isAdjacent ? 'visible' : 'hidden',
+                zIndex: isCurrent ? 2 : 1,
+              }}>
               <img
-                src={slide.image}
+                src={slide.image || slide.fallback}
                 alt={slide.description}
-                loading="eager"
+                loading={index === 0 ? 'eager' : 'lazy'}
+                onError={(e) => {
+                  if (slide.fallback && e.currentTarget.src !== slide.fallback) {
+                    e.currentTarget.src = slide.fallback;
+                  }
+                }}
                 className="w-full h-full object-cover object-center transform scale-100 transition-transform duration-5000 ease-out"
               />
             </div>
-          ))}
-        </div>
+          );
+        })}
 
         {/* Cinematic contrast overlay: keeps photos richly visible while ensuring text pops */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#151816]/75 via-[#151816]/40 to-[#151816]/90 pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[#151816]/20 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#151816]/70 via-[#151816]/30 to-[#151816]/85 pointer-events-none z-10"></div>
       </div>
 
       {/* Slide Navigation Arrows (Visible on Mobile & Desktop) */}
@@ -170,7 +199,7 @@ export default function Hero({
       </button>
 
       {/* Hero Foreground Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center space-y-5 sm:space-y-7">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 text-center space-y-5 sm:space-y-7">
         
         {/* Top Floating Pill: Active Slide Location */}
         <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-semibold shadow-sm max-w-full">

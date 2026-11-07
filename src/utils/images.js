@@ -14,21 +14,28 @@ import commercialAbujaBoutique from '../assets/images/commercial-abuja-boutique.
 import industrialWarehouse from '../assets/images/industrial-warehouse.jpg';
 import interiorLivingRoom from '../assets/images/interior-living-room.jpg';
 
-const getImageSrc = (img) => (typeof img === 'object' && img?.src ? img.src : img);
+const getImageSrc = (img) => {
+  if (!img) return '';
+  if (typeof img === 'string') return img;
+  if (img.src) return img.src;
+  if (img.default?.src) return img.default.src;
+  if (typeof img.default === 'string') return img.default;
+  return '';
+};
 
 export const IMAGES = {
-  heroLagosDuplex: getImageSrc(heroLagosDuplex),
-  heroIkoyiApartment: getImageSrc(heroIkoyiApartment),
-  heroLekkiEntrance: getImageSrc(heroLekkiEntrance),
-  heroLagoonWaterfront: getImageSrc(heroLagoonWaterfront),
-  heroMaitamaTerrace: getImageSrc(heroMaitamaTerrace),
-  heroAbujaPlaza: getImageSrc(heroAbujaPlaza),
-  heroPhCommercial: getImageSrc(heroPhCommercial),
-  heroPhGraDuplex: getImageSrc(heroPhGraDuplex),
-  heroEnuguMansion: getImageSrc(heroEnuguMansion),
-  commercialAbujaBoutique: getImageSrc(commercialAbujaBoutique),
-  industrialWarehouse: getImageSrc(industrialWarehouse),
-  interiorLivingRoom: getImageSrc(interiorLivingRoom),
+  heroLagosDuplex: getImageSrc(heroLagosDuplex) || '/images/hero-lagos-duplex.jpg',
+  heroIkoyiApartment: getImageSrc(heroIkoyiApartment) || '/images/hero_slider_ikoyi_apartment.jpg',
+  heroLekkiEntrance: getImageSrc(heroLekkiEntrance) || '/images/hero_slider_lekki_street_entrance.jpg',
+  heroLagoonWaterfront: getImageSrc(heroLagoonWaterfront) || '/images/hero_slider_lagoon_waterfront.jpg',
+  heroMaitamaTerrace: getImageSrc(heroMaitamaTerrace) || '/images/hero_slider_maitama_terrace.jpg',
+  heroAbujaPlaza: getImageSrc(heroAbujaPlaza) || '/images/hero_slider_abuja_gwarinpa_plaza.jpg',
+  heroPhCommercial: getImageSrc(heroPhCommercial) || '/images/hero_slider_ph_commercial.jpg',
+  heroPhGraDuplex: getImageSrc(heroPhGraDuplex) || '/images/hero_slider_ph_gra_duplex.jpg',
+  heroEnuguMansion: getImageSrc(heroEnuguMansion) || '/images/hero_slider_enugu_mansion.jpg',
+  commercialAbujaBoutique: getImageSrc(commercialAbujaBoutique) || '/images/commercial-abuja-boutique.jpg',
+  industrialWarehouse: getImageSrc(industrialWarehouse) || '/images/industrial-warehouse.jpg',
+  interiorLivingRoom: getImageSrc(interiorLivingRoom) || '/images/interior-living-room.jpg',
 };
 
 const FILENAME_MAP = {
