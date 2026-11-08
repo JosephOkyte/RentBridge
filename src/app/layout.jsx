@@ -15,6 +15,42 @@ export default function RootLayout({ children }) {
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
         <head>
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function() {
+                  function shouldIgnore(msg, source) {
+                    var str = ((msg || '') + ' ' + (source || '')).toLowerCase();
+                    return str.indexOf('metamask') !== -1 ||
+                           str.indexOf('inpage.js') !== -1 ||
+                           str.indexOf('chrome-extension://') !== -1 ||
+                           str.indexOf('moz-extension://') !== -1 ||
+                           str.indexOf('ethereum') !== -1 ||
+                           str.indexOf('ejbalbakoplchlghecdalmeeeajnimhm') !== -1;
+                  }
+
+                  window.addEventListener('unhandledrejection', function(event) {
+                    var reason = event && event.reason;
+                    var msg = reason ? (reason.message || reason.toString() || '') : '';
+                    var stack = (reason && reason.stack) || '';
+                    if (shouldIgnore(msg, stack)) {
+                      event.stopImmediatePropagation();
+                      event.preventDefault();
+                    }
+                  }, true);
+
+                  window.addEventListener('error', function(event) {
+                    var msg = event && event.message ? event.message : '';
+                    var source = (event && event.filename) || '';
+                    if (shouldIgnore(msg, source)) {
+                      event.stopImmediatePropagation();
+                      event.preventDefault();
+                    }
+                  }, true);
+                })();
+              `,
+            }}
+          />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link
