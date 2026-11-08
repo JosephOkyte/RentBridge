@@ -25,7 +25,13 @@ export async function GET() {
     }
 
     const email = user.primaryEmailAddress?.emailAddress || '';
+    const isClerkAdmin = user.publicMetadata?.role === 'admin';
     const isAdminEmail = email.endsWith('@rentbridge.ng') || email === 'admin@rentbridge.ng';
+    const isSuperAdmin = isClerkAdmin || isAdminEmail || profile?.role === 'admin';
+
+    const finalProfile = profile 
+      ? { ...profile, role: isSuperAdmin ? 'admin' : profile.role } 
+      : (isSuperAdmin ? { role: 'admin', is_verified: true, email, full_name: user.fullName || 'Admin' } : null);
 
     return NextResponse.json({
       user: {
@@ -34,8 +40,8 @@ export async function GET() {
         fullName: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Verified User',
         phone: user.primaryPhoneNumber?.phoneNumber || '',
       },
-      profile: profile || (isAdminEmail ? { role: 'admin', is_verified: true } : null),
-      isAdmin: isAdminEmail || profile?.role === 'admin',
+      profile: finalProfile,
+      isAdmin: isSuperAdmin,
     });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
@@ -111,3 +117,4 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

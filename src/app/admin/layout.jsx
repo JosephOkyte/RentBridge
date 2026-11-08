@@ -19,6 +19,7 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
 
   const adminNav = [
+    { name: 'Citadel Overview', href: '/admin', icon: Layers, badge: 'Operations Hub' },
     { name: 'Phase 1 Verification Desk', href: '/admin/verification', icon: ShieldCheck, badge: 'Gatekeeper' },
     { name: 'Stealth Account Monitor', href: '/admin/accounts', icon: Users, badge: 'Silent Audit' },
     { name: 'Anti-Fraud Incident Room', href: '/admin/fraud', icon: AlertTriangle, badge: 'Extortion Watch' },

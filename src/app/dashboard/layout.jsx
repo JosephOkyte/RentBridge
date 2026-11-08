@@ -43,9 +43,9 @@ export default function DashboardLayout({ children }) {
     fetchProfile();
   }, [user]);
 
-  const userRole = profile?.role || 'tenant';
-  const isLister = ['landlord', 'lawyer', 'caretaker'].includes(userRole);
-  const isAdmin = profile?.role === 'admin' || user?.primaryEmailAddress?.emailAddress?.endsWith('@rentbridge.ng');
+  const userRole = profile?.role || user?.publicMetadata?.role || 'tenant';
+  const isAdmin = userRole === 'admin' || user?.primaryEmailAddress?.emailAddress?.endsWith('@rentbridge.ng') || user?.publicMetadata?.role === 'admin';
+  const isLister = ['landlord', 'lawyer', 'caretaker', 'admin'].includes(userRole);
 
   // Strict role-specific navigation menus
   const tenantNavigation = [
@@ -100,12 +100,14 @@ export default function DashboardLayout({ children }) {
                 {user?.fullName || user?.firstName || 'Verified User'}
               </p>
               <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full capitalize ${
-                isLister 
+                userRole === 'admin'
+                  ? 'bg-red-100 text-red-700 border border-red-300'
+                  : isLister 
                   ? 'bg-[#EBF2ED] text-[#2D5A43]' 
                   : 'bg-[#E0F2FE] text-[#0369A1]'
               }`}>
                 <ShieldCheck className="w-3 h-3" />
-                <span>{userRole === 'tenant' ? 'Verified Tenant' : `Verified ${userRole}`}</span>
+                <span>{userRole === 'admin' ? 'Super Admin' : userRole === 'tenant' ? 'Verified Tenant' : `Verified ${userRole}`}</span>
               </span>
             </div>
           </div>
