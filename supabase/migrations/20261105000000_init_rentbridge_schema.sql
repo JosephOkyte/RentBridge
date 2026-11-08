@@ -1,4 +1,0 @@
--- ====================================================================
--- NOTE: Please use '20261108000000_create_rentbridge_database.sql'
--- which is the latest, fully consolidated production schema and seed.
--- ====================================================================
