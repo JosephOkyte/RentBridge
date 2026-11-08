@@ -145,8 +145,81 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { inspectionId, action, reportNotes, propertyTitle, listerName } = body;
+    const { 
+      inspectionId, 
+      action, 
+      reportNotes, 
+      propertyTitle, 
+      listerName, 
+      alternateDate, 
+      alternateTimeSlot,
+      status: nextStatus
+    } = body;
 
+    const adminClient = createAdminClient();
+
+    // 1. Lister confirms requested inspection slot
+    if (action === 'confirm_slot') {
+      try {
+        await adminClient
+          .from('inspections')
+          .update({ 
+            status: 'confirmed', 
+            notes: reportNotes ? `Confirmed by custodian: ${reportNotes}` : 'Confirmed by custodian.' 
+          })
+          .eq('id', inspectionId);
+      } catch (dbErr) {
+        console.warn('[Supabase DB notice]:', dbErr.message);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Inspection slot confirmed. The tenant has been notified with your direct contact details.',
+      });
+    }
+
+    // 2. Lister suggests alternate date / time
+    if (action === 'suggest_alternate') {
+      try {
+        await adminClient
+          .from('inspections')
+          .update({
+            scheduled_at: alternateDate,
+            time_slot: alternateTimeSlot,
+            notes: `Custodian proposed alternate time: ${alternateDate} at ${alternateTimeSlot}. ${reportNotes || ''}`,
+          })
+          .eq('id', inspectionId);
+      } catch (dbErr) {
+        console.warn('[Supabase DB notice]:', dbErr.message);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Alternate time proposed (${alternateDate} at ${alternateTimeSlot}). Awaiting tenant acceptance.`,
+      });
+    }
+
+    // 3. Tenant accepts proposed alternate time
+    if (action === 'accept_alternate') {
+      try {
+        await adminClient
+          .from('inspections')
+          .update({
+            status: 'confirmed',
+            notes: 'Alternate time accepted by tenant. Viewing locked in.',
+          })
+          .eq('id', inspectionId);
+      } catch (dbErr) {
+        console.warn('[Supabase DB notice]:', dbErr.message);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Alternate time accepted! Inspection is now confirmed.',
+      });
+    }
+
+    // 4. Extortion report
     if (action === 'report_extortion') {
       // 🚨 Red Alert: A tenant reported an inspection fee demand!
       try {

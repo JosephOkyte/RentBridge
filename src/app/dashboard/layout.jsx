@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton, useUser } from '@clerk/nextjs';
@@ -9,26 +9,59 @@ import {
   Calendar, 
   PlusCircle, 
   ShieldCheck, 
-  Home, 
   LayoutDashboard, 
-  FileText, 
-  AlertTriangle,
   ArrowLeft,
   Lock,
   User,
-  Compass
+  Heart,
+  Search,
+  Sparkles,
+  HelpCircle
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
 
-  const navigation = [
-    { name: 'Dashboard Overview', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'My Properties & Drafts', href: '/dashboard/properties', icon: Building2 },
-    { name: 'Add New Property', href: '/dashboard/properties/new', icon: PlusCircle },
-    { name: 'Inspection Viewings', href: '/dashboard/inspections', icon: Calendar },
+  useEffect(() => {
+    async function fetchProfile() {
+      if (!user) return;
+      try {
+        const res = await fetch('/api/profile');
+        const data = await res.json();
+        if (data.profile) {
+          setProfile(data.profile);
+        }
+      } catch (err) {
+        console.warn('Failed to load profile:', err);
+      } finally {
+        setLoadingProfile(false);
+      }
+    }
+    fetchProfile();
+  }, [user]);
+
+  const userRole = profile?.role || 'tenant';
+  const isLister = ['landlord', 'lawyer', 'caretaker'].includes(userRole);
+  const isAdmin = profile?.role === 'admin' || user?.primaryEmailAddress?.emailAddress?.endsWith('@rentbridge.ng');
+
+  // Strict role-specific navigation menus
+  const tenantNavigation = [
+    { name: 'Tenant Overview', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Booked Inspections (₦0 Fee)', href: '/dashboard/inspections', icon: Calendar },
+    { name: 'Browse Direct Properties', href: '/#properties', icon: Search },
   ];
+
+  const listerNavigation = [
+    { name: 'Portfolio Overview', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Properties & Staged Drafts', href: '/dashboard/properties', icon: Building2 },
+    { name: 'Stage New Listing', href: '/dashboard/properties/new', icon: PlusCircle },
+    { name: 'Inspection Dispatcher', href: '/dashboard/inspections', icon: Calendar },
+  ];
+
+  const navigation = isLister ? listerNavigation : tenantNavigation;
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] flex flex-col md:flex-row text-[#151816]">
@@ -46,7 +79,7 @@ export default function DashboardLayout({ children }) {
                   Rent<span className="text-[#2D5A43]">Bridge</span>
                 </span>
                 <span className="block text-[10px] text-[#8F8372] font-semibold uppercase tracking-wider">
-                  Management Portal
+                  {isLister ? 'Custodian Suite' : 'Tenant Portal'}
                 </span>
               </div>
             </Link>
@@ -66,15 +99,25 @@ export default function DashboardLayout({ children }) {
               <p className="text-xs font-bold text-[#151816] truncate">
                 {user?.fullName || user?.firstName || 'Verified User'}
               </p>
-              <span className="inline-flex items-center gap-1 text-[10px] text-[#2D5A43] font-extrabold bg-[#EBF2ED] px-2 py-0.5 rounded-full">
+              <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full capitalize ${
+                isLister 
+                  ? 'bg-[#EBF2ED] text-[#2D5A43]' 
+                  : 'bg-[#E0F2FE] text-[#0369A1]'
+              }`}>
                 <ShieldCheck className="w-3 h-3" />
-                <span>Verified Account</span>
+                <span>{userRole === 'tenant' ? 'Verified Tenant' : `Verified ${userRole}`}</span>
               </span>
             </div>
           </div>
 
           {/* Navigation Links */}
           <nav className="px-4 space-y-1.5">
+            <div className="pb-1 px-3">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#8F8372]">
+                {isLister ? 'Portfolio Management' : 'Renter Sanctuary'}
+              </span>
+            </div>
+
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -93,33 +136,39 @@ export default function DashboardLayout({ children }) {
               );
             })}
 
-            {/* Quick Admin Navigation Switcher */}
-            <div className="pt-4 border-t border-[#E8DFC8]/60 mt-4">
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8F8372] px-3.5 mb-2">
-                Compliance & Staff Access
-              </p>
-              <Link
-                href="/admin/verification"
-                className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-[#EBF2ED] text-[#2D5A43] hover:bg-[#2D5A43] hover:text-white transition-all">
-                <span className="flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Admin Verification Desk</span>
-                </span>
-                <span className="text-[10px] bg-[#2D5A43]/20 px-1.5 py-0.5 rounded font-mono font-bold">
-                  Phase 1
-                </span>
-              </Link>
-            </div>
+            {/* Quick Admin Navigation Switcher (Strictly for Admins) */}
+            {isAdmin && (
+              <div className="pt-4 border-t border-[#E8DFC8]/60 mt-4">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8F8372] px-3.5 mb-2">
+                  Super Admin Citadel
+                </p>
+                <Link
+                  href="/admin/verification"
+                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-[#EBF2ED] text-[#2D5A43] hover:bg-[#2D5A43] hover:text-white transition-all">
+                  <span className="flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Gatekeeper Desk</span>
+                  </span>
+                  <span className="text-[10px] bg-[#2D5A43]/20 px-1.5 py-0.5 rounded font-mono font-bold">
+                    Phase 1
+                  </span>
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
 
         {/* Footer Return Action */}
-        <div className="p-4 border-t border-[#E8DFC8]">
+        <div className="p-4 border-t border-[#E8DFC8] space-y-2">
+          <div className="px-3 py-2 rounded-xl bg-[#F5EFEB] border border-[#E8DFC8] text-[11px] text-[#4B524D]">
+            <p className="font-bold text-[#1E3F2F]">Zero Agent Guarantee</p>
+            <p className="text-[10px] text-[#8F8372]">₦0 inspection fees, 0% commissions.</p>
+          </div>
           <Link
             href="/"
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-bold text-[#4B524D] hover:bg-[#F5EFEB] border border-[#E8DFC8] transition-all">
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Public Marketplace</span>
+            <span>Return to Marketplace</span>
           </Link>
         </div>
       </aside>
@@ -133,4 +182,3 @@ export default function DashboardLayout({ children }) {
     </div>
   );
 }
-

@@ -168,8 +168,40 @@ export async function POST(request) {
       property: newProperty,
       message:
         status === 'draft'
-          ? 'Property saved as draft. You can continue uploading photos anytime.'
+          ? 'Property saved as draft. You have 30 days to finish uploading your photos.'
           : 'Property submitted for Phase 1 manual verification. Our compliance desk will audit your street photos and deeds within 24 hours.',
+    });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH: Update Property Status (e.g., Mark as Rented, Update Draft)
+ */
+export async function PATCH(request) {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { propertyId, status } = body;
+
+    const adminClient = createAdminClient();
+    const { error } = await adminClient
+      .from('properties')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', propertyId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: status === 'rented' ? 'Property marked as Rented.' : 'Property updated.',
     });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

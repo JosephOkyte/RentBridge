@@ -26,10 +26,27 @@ export default function NewPropertyWizardPage() {
   const router = useRouter();
   const { user } = useUser();
 
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [listerRole, setListerRole] = useState('landlord');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+
+  React.useEffect(() => {
+    fetch('/api/profile')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.profile) {
+          setProfile(data.profile);
+          if (['landlord', 'lawyer', 'caretaker'].includes(data.profile.role)) {
+            setListerRole(data.profile.role);
+          }
+        }
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoadingProfile(false));
+  }, []);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -161,6 +178,33 @@ export default function NewPropertyWizardPage() {
       setLoading(false);
     }
   };
+
+  if (!loadingProfile && profile?.role === 'tenant') {
+    return (
+      <div className="p-8 sm:p-12 rounded-3xl bg-white border border-[#E8DFC8] text-center space-y-4 max-w-2xl mx-auto shadow-sm animate-fadeIn">
+        <div className="w-16 h-16 rounded-2xl bg-[#E0F2FE] text-[#0369A1] flex items-center justify-center mx-auto">
+          <ShieldCheck className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl sm:text-2xl font-black text-[#151816]">
+          Tenant Account Restrictions
+        </h2>
+        <p className="text-xs sm:text-sm text-[#4B524D] leading-relaxed">
+          Your account is registered as a <strong>Verified Tenant</strong>. To maintain 100% zero-agent purity and multi-tenant data isolation, only registered Landlords, Retained Lawyers, and Resident Caretakers can stage or list properties.
+        </p>
+        <p className="text-xs text-[#8F8372]">
+          If you are also a property owner looking to list, please sign in with your separate custodian account.
+        </p>
+        <div className="pt-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold shadow-md hover:bg-[#1E3F2F] transition-all">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Tenant Sanctuary</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
@@ -477,28 +521,33 @@ export default function NewPropertyWizardPage() {
         </div>
 
         {/* Dual Actions: Save as Draft vs Submit for Verification */}
-        <div className="pt-4 border-t border-[#E8DFC8] flex flex-col sm:flex-row items-center gap-3">
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handleAction('draft')}
-            className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] text-xs sm:text-sm font-bold border border-[#D7CBBB] transition-all cursor-pointer flex items-center justify-center gap-2">
-            <BookmarkCheck className="w-4 h-4" />
-            <span>Save as Draft</span>
-          </button>
+        <div className="pt-4 border-t border-[#E8DFC8] space-y-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleAction('draft')}
+              className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] text-xs sm:text-sm font-bold border border-[#D7CBBB] transition-all cursor-pointer flex items-center justify-center gap-2">
+              <BookmarkCheck className="w-4 h-4" />
+              <span>Save as Draft (30-Day Timer)</span>
+            </button>
 
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => handleAction('pending_audit')}
-            className={`w-full sm:w-2/3 py-3.5 rounded-xl text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 ${
-              hasMetQuota
-                ? 'bg-[#2D5A43] hover:bg-[#1E3F2F]'
-                : 'bg-[#2D5A43]/70 hover:bg-[#2D5A43]'
-            }`}>
-            <ShieldCheck className="w-4 h-4" />
-            <span>Submit for Phase 1 Verification ({uploadedPhotos.length}/{minRequiredPhotos} Photos)</span>
-          </button>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => handleAction('pending_audit')}
+              className={`w-full sm:w-2/3 py-3.5 rounded-xl text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                hasMetQuota
+                  ? 'bg-[#2D5A43] hover:bg-[#1E3F2F]'
+                  : 'bg-[#2D5A43]/70 hover:bg-[#2D5A43]'
+              }`}>
+              <ShieldCheck className="w-4 h-4" />
+              <span>Submit for Phase 1 Verification ({uploadedPhotos.length}/{minRequiredPhotos} Photos)</span>
+            </button>
+          </div>
+          <p className="text-[11px] text-[#8F8372] text-center">
+            ⏱️ <strong>30-Day Draft Lifespan:</strong> Incomplete drafts remain securely stored for 30 days while you take your time capturing required access road, compound gate, and interior photos.
+          </p>
         </div>
 
       </div>
