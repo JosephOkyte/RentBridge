@@ -1,7 +1,9 @@
 -- ====================================================================
 -- RENTBRIDGE NIGERIA - COMPLETE PRODUCTION DATABASE SETUP & SEED
--- Clean Migration & Re-initialization
+-- Clean Slate & Single Authoritative Migration
 -- Target Cities: Lagos, Abuja, Port Harcourt, Enugu
+-- NOTE: Zero placeholder caretaker, lawyer, or landlord accounts seeded into profiles.
+-- Real profiles are dynamically created upon real user sign-up via Clerk.
 -- ====================================================================
 
 -- 1. EXTENSIONS
@@ -21,7 +23,7 @@ DROP TYPE IF EXISTS target_city CASCADE;
 DROP TYPE IF EXISTS listing_status CASCADE;
 DROP TYPE IF EXISTS inspection_status CASCADE;
 
--- 3. PROFILES TABLE (Mirrors Clerk Identity)
+-- 3. PROFILES TABLE (Mirrors Clerk Identity - Real Users Only)
 CREATE TABLE public.profiles (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   clerk_id TEXT UNIQUE NOT NULL,
@@ -188,21 +190,8 @@ CREATE POLICY "Admin logs strictly service role only"
   ON public.admin_audit_logs FOR ALL
   USING (false);
 
--- 10. INITIAL SEED PROFILES
-INSERT INTO public.profiles (clerk_id, email, full_name, phone, whatsapp, role, is_verified, city_hub)
-VALUES
-  ('seed_landlord_dapo', 'dapo.alabi@gmail.com', 'Engr. Dapo Alabi (Owner)', '+234 803 445 1928', '2348034451928', 'landlord', true, 'lagos'),
-  ('seed_lawyer_nkechi', 'nkechi.umeh@legalcustody.ng', 'Barrister Nkechi Umeh', '+234 812 990 4120', '2348129904120', 'lawyer', true, 'abuja'),
-  ('seed_caretaker_emeka', 'emeka.nnamdi@caretaker.ng', 'Mr. Emeka Nnamdi (Resident Caretaker)', '+234 803 112 9901', '2348031129901', 'caretaker', true, 'lagos'),
-  ('seed_lawyer_chibuike', 'chibuike.amadi@lawfirm.ng', 'Barr. Chibuike Amadi (SAN Retained)', '+234 809 778 3344', '2348097783344', 'lawyer', true, 'ph'),
-  ('seed_landlord_mustapha', 'alhadji.mustapha@gmail.com', 'Alhaji Mustapha Bello (Property Owner)', '+234 802 334 5566', '2348023345566', 'landlord', true, 'abuja'),
-  ('seed_lawyer_folake', 'folake.adesina@chambers.ng', 'Barrister Folake Adesina (Legal Custodian)', '+234 805 667 8899', '2348056678899', 'lawyer', true, 'lagos'),
-  ('seed_caretaker_godwin', 'godwin.tamuno@caretaker.ng', 'Captain Godwin Tamuno (Head Caretaker)', '+234 803 998 2211', '2348039982211', 'caretaker', true, 'ph'),
-  ('seed_landlord_segun', 'segun.ogundimu@techrealestate.ng', 'Dr. Segun Ogundimu (Owner)', '+234 808 123 9988', '2348081239988', 'landlord', true, 'lagos'),
-  ('seed_landlord_obinna', 'obinna.eze@enuguproperties.ng', 'Chief Obinna Eze (Title Holder)', '+234 806 443 2211', '2348064432211', 'landlord', true, 'enugu')
-ON CONFLICT (clerk_id) DO NOTHING;
-
--- 11. INITIAL SEED PROPERTIES (9 Verified Vacancies across Lagos, Abuja, PH & Enugu)
+-- 10. INITIAL SEED PROPERTIES (9 Verified Vacancies across Lagos, Abuja, PH & Enugu)
+-- Note: lister_clerk_id is NULL so no placeholder caretaker, lawyer, or landlord accounts are created.
 INSERT INTO public.properties (
   id, lister_clerk_id, lister_name, lister_phone, lister_whatsapp, lister_role,
   title, property_kind, category, city, neighborhood, address, latitude, longitude,
@@ -212,7 +201,7 @@ INSERT INTO public.properties (
 )
 VALUES
   (
-    'prop-1', 'seed_landlord_dapo', 'Engr. Dapo Alabi (Owner)', '+234 803 445 1928', '2348034451928', 'landlord',
+    'prop-1', NULL, 'Engr. Dapo Alabi (Owner)', '+234 803 445 1928', '2348034451928', 'landlord',
     'Luxury 4-Bedroom Semi-Detached Duplex', 'Contemporary Duplex', 'residential', 'lagos',
     'Lekki Phase 1, Admiralty Way Axis', 'Plot 14, Block 8, Off Admiralty Way, Lekki Phase 1, Lagos', 6.4474, 3.4735,
     14000000, 1000000, 1200000, 0, 4, 5, '420 sqm',
@@ -222,7 +211,7 @@ VALUES
     ARRAY['Zero Agent Wahala (₦0 Agent Fee)', '24/7 Gated Estate Security', 'Flood-Free Interlocked Compound', 'Dedicated Inverter & Central Generator', 'Prepaid Smart Metre', 'Ample 4-Car Parking']
   ),
   (
-    'prop-2', 'seed_lawyer_nkechi', 'Barrister Nkechi Umeh', '+234 812 990 4120', '2348129904120', 'lawyer',
+    'prop-2', NULL, 'Barrister Nkechi Umeh', '+234 812 990 4120', '2348129904120', 'lawyer',
     'Prime High-Street Retail Boutique & Showroom', 'Commercial Plaza Shop', 'commercial', 'abuja',
     'Wuse 2, Aminu Kano Crescent', 'Suite B12, Regent Crest Plaza, Aminu Kano Crescent, Wuse 2, Abuja', 9.0722, 7.4756,
     9500000, 800000, 900000, 0, 0, 2, '95 sqm',
@@ -232,7 +221,7 @@ VALUES
     ARRAY['Heavy Foot Traffic Commercial Plaza', 'Zero Middleman Markup', 'Central 250kVA Standby Generator', 'Full Glass Frontage Display', 'Dedicated Customer Basement Parking', 'Armed Facility Security']
   ),
   (
-    'prop-3', 'seed_caretaker_emeka', 'Mr. Emeka Nnamdi (Resident Caretaker)', '+234 803 112 9901', '2348031129901', 'caretaker',
+    'prop-3', NULL, 'Mr. Emeka Nnamdi (Resident Caretaker)', '+234 803 112 9901', '2348031129901', 'caretaker',
     'Ultra-Modern 3-Bedroom Serviced Waterfront Apartment', 'Serviced Luxury Flat', 'residential', 'lagos',
     'Ikoyi Waterfront Corridor', 'Apartment 4A, Horizon Lagoon Towers, Alexander Avenue, Ikoyi, Lagos', 6.4531, 3.4358,
     18500000, 1500000, 2400000, 0, 3, 4, '310 sqm',
@@ -242,7 +231,7 @@ VALUES
     ARRAY['Zero Agent Markups', 'Lagoon Waterfront Scenery', '24/7 Uninterrupted Electricity', 'Olympic-size Pool & Squash Court', 'Private Boat Jetty Access', 'Smart Elevator & Access Card Entry']
   ),
   (
-    'prop-4', 'seed_lawyer_chibuike', 'Barr. Chibuike Amadi (SAN Retained)', '+234 809 778 3344', '2348097783344', 'lawyer',
+    'prop-4', NULL, 'Barr. Chibuike Amadi (SAN Retained)', '+234 809 778 3344', '2348097783344', 'lawyer',
     'Commercial Distribution & Logistics Hub (Warehouse)', 'Industrial Logistics Facility', 'industrial', 'ph',
     'Trans-Amadi Industrial Layout', 'Plot 18B, Trans-Amadi Industrial Layout, Port Harcourt, Rivers State', 4.8194, 7.0392,
     16000000, 1500000, 1000000, 0, 0, 4, '1,250 sqm',
@@ -252,7 +241,7 @@ VALUES
     ARRAY['Zero Broker Commission', '40ft Articulated Trailer Turning Apron', '8-Metre Stacking Clear Height', 'Dedicated 500kVA Transformer', 'Integrated 2-Floor Admin Office Block', 'Dual Industrial Security Gates']
   ),
   (
-    'prop-5', 'seed_landlord_mustapha', 'Alhaji Mustapha Bello (Property Owner)', '+234 802 334 5566', '2348023345566', 'landlord',
+    'prop-5', NULL, 'Alhaji Mustapha Bello (Property Owner)', '+234 802 334 5566', '2348023345566', 'landlord',
     'Contemporary Diplomatic 5-Bedroom Terrace with Private Pool', 'Executive Gated Terrace', 'residential', 'abuja',
     'Maitama Diplomatic Zone', 'Villa 6, Aso Vista Enclave, Amazon Street, Maitama, Abuja', 9.0882, 7.4961,
     24000000, 2000000, 1800000, 0, 5, 6, '580 sqm',
@@ -262,7 +251,7 @@ VALUES
     ARRAY['Zero Agent Wahala (₦0 Agent Fee)', 'Diplomatic Enclave Security', 'Private Plunge Pool & Sun Deck', 'Fitted Italian Granite Kitchen', 'Dedicated Solar-Inverter Central Grid', 'Motorized Gate with Access Control']
   ),
   (
-    'prop-6', 'seed_lawyer_folake', 'Barrister Folake Adesina (Legal Custodian)', '+234 805 667 8899', '2348056678899', 'lawyer',
+    'prop-6', NULL, 'Barrister Folake Adesina (Legal Custodian)', '+234 805 667 8899', '2348056678899', 'lawyer',
     'Prime Corporate Headquarters & Open-Plan Office Suites', 'Commercial Office Complex', 'commercial', 'lagos',
     'Victoria Island Financial District', 'Floor 5, Apex Towers, Adeola Odeku Street, Victoria Island, Lagos', 6.4281, 3.4219,
     32000000, 3000000, 3500000, 0, 0, 8, '450 sqm',
@@ -272,7 +261,7 @@ VALUES
     ARRAY['Zero Broker Surcharge', 'Raised Access Flooring for Cabling', 'Dual Backup 500kVA Generators', 'Double High-Speed Passenger Lifts', 'Basement & Surface Parking (12 slots)', 'Fire Suppression & FM200 Systems']
   ),
   (
-    'prop-7', 'seed_caretaker_godwin', 'Captain Godwin Tamuno (Head Caretaker)', '+234 803 998 2211', '2348039982211', 'caretaker',
+    'prop-7', NULL, 'Captain Godwin Tamuno (Head Caretaker)', '+234 803 998 2211', '2348039982211', 'caretaker',
     'Executive 4-Bedroom Waterfront Penthouse & Private Lounge', 'Luxury Penthouse', 'residential', 'ph',
     'Peter Odili / Trans-Amadi Waterline', 'Penthouse East, Marine Crest Heights, Peter Odili Road, Port Harcourt', 4.8021, 7.0411,
     15000000, 1000000, 1500000, 0, 4, 5, '390 sqm',
@@ -282,7 +271,7 @@ VALUES
     ARRAY['Zero Agent Fee Guaranteed', 'Wrap-around Waterfront Terrace', 'Automated Lighting & Curtain Tracks', 'Dedicated 2-Car Covered Port', 'Treated Water Reticulation System', 'CCTV & Biometric Entry Gate']
   ),
   (
-    'prop-8', 'seed_landlord_segun', 'Dr. Segun Ogundimu (Owner)', '+234 808 123 9988', '2348081239988', 'landlord',
+    'prop-8', NULL, 'Dr. Segun Ogundimu (Owner)', '+234 808 123 9988', '2348081239988', 'landlord',
     'Contemporary Tech Studio & Co-Work Creative Loft', 'Creative Commercial Space', 'commercial', 'lagos',
     'Yaba Tech Valley Corridor', '3rd Floor, Silicon Enclave, Herbert Macaulay Way, Yaba, Lagos', 6.5095, 3.3792,
     4800000, 400000, 500000, 0, 1, 2, '85 sqm',
@@ -292,7 +281,7 @@ VALUES
     ARRAY['Zero Middleman Fees', 'Redundant Fibre-Optic Internet Ducts', '24/7 Power Backup (Solar + Gen)', 'Soundproof Acoustic Pods', 'Communal Rooftop Coffee Lounge', 'Secured Keycard Access']
   ),
   (
-    'prop-9', 'seed_landlord_obinna', 'Chief Obinna Eze (Title Holder)', '+234 806 443 2211', '2348064432211', 'landlord',
+    'prop-9', NULL, 'Chief Obinna Eze (Title Holder)', '+234 806 443 2211', '2348064432211', 'landlord',
     'Prime Contemporary 5-Bedroom Residential Compound', 'Contemporary Mansion', 'residential', 'enugu',
     'Independence Layout Gated Area', 'Plot 8, Presidential Close, Off Bisalla Road, Independence Layout, Enugu', 6.4522, 7.5105,
     6500000, 500000, 400000, 0, 5, 5, '550 sqm',
