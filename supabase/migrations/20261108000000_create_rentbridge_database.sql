@@ -7,19 +7,9 @@
 -- 1. EXTENSIONS
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. DROP EXISTING POLICIES (for safe re-runs)
-DROP POLICY IF EXISTS "Public can view active properties" ON public.properties;
-DROP POLICY IF EXISTS "Listers manage their own properties" ON public.properties;
-DROP POLICY IF EXISTS "Public can view media for active properties" ON public.property_media;
-DROP POLICY IF EXISTS "Listers manage their property media" ON public.property_media;
-DROP POLICY IF EXISTS "Listers can view own compliance records" ON public.compliance_records;
-DROP POLICY IF EXISTS "Tenants view own inspections" ON public.inspections;
-DROP POLICY IF EXISTS "Listers view property inspections" ON public.inspections;
-DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
-DROP POLICY IF EXISTS "Admin logs strictly service role only" ON public.admin_audit_logs;
+-- 2. CREATE TABLES FIRST (Guarantees relations exist before policies are bound)
 
--- 3. PROFILES TABLE (Mirrors Clerk Identity)
+-- 2.1 PROFILES TABLE (Mirrors Clerk Identity)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   clerk_id TEXT UNIQUE NOT NULL,
@@ -38,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE INDEX IF NOT EXISTS idx_profiles_clerk_id ON public.profiles(clerk_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
 
--- 4. PROPERTIES TABLE (Strict ₦0 Agent Fee, Staged Drafts & Photo Quotas)
+-- 2.2 PROPERTIES TABLE (Strict ₦0 Agent Fee, Staged Drafts & Photo Quotas)
 CREATE TABLE IF NOT EXISTS public.properties (
   id TEXT PRIMARY KEY DEFAULT ('prop-' || floor(extract(epoch from now()) * 1000)::text),
   lister_clerk_id TEXT,
@@ -80,19 +70,19 @@ CREATE INDEX IF NOT EXISTS idx_properties_status ON public.properties(status);
 CREATE INDEX IF NOT EXISTS idx_properties_city ON public.properties(city);
 CREATE INDEX IF NOT EXISTS idx_properties_lister_clerk_id ON public.properties(lister_clerk_id);
 
--- 5. PROPERTY MEDIA (Photo Transparency Standard)
+-- 2.3 PROPERTY MEDIA (Photo Transparency Standard)
 CREATE TABLE IF NOT EXISTS public.property_media (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   property_id TEXT NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
   bucket_path TEXT NOT NULL,
-  tag TEXT NOT NULL, -- 'Street View', 'Access Road', 'Entrance Gate', 'Living Room', etc.
+  tag TEXT NOT NULL,
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_property_media_property_id ON public.property_media(property_id);
 
--- 6. COMPLIANCE RECORDS (Private Legal Deed Vault)
+-- 2.4 COMPLIANCE RECORDS (Private Legal Deed Vault)
 CREATE TABLE IF NOT EXISTS public.compliance_records (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   property_id TEXT NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
@@ -106,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.compliance_records (
 
 CREATE INDEX IF NOT EXISTS idx_compliance_records_property_id ON public.compliance_records(property_id);
 
--- 7. INSPECTIONS TABLE (100% Free Viewings & Anti-Extortion Tracking)
+-- 2.5 INSPECTIONS TABLE (100% Free Viewings & Anti-Extortion Tracking)
 CREATE TABLE IF NOT EXISTS public.inspections (
   id TEXT PRIMARY KEY DEFAULT ('insp-' || floor(extract(epoch from now()) * 1000)::text),
   property_id TEXT NOT NULL REFERENCES public.properties(id) ON DELETE CASCADE,
@@ -130,7 +120,7 @@ CREATE TABLE IF NOT EXISTS public.inspections (
 CREATE INDEX IF NOT EXISTS idx_inspections_property_id ON public.inspections(property_id);
 CREATE INDEX IF NOT EXISTS idx_inspections_tenant_clerk_id ON public.inspections(tenant_clerk_id);
 
--- 8. STEALTH ADMIN AUDIT LOGS (Zero notification to account owners)
+-- 2.6 STEALTH ADMIN AUDIT LOGS (Zero notification to account owners)
 CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
   admin_clerk_id TEXT NOT NULL,
@@ -142,9 +132,7 @@ CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
 
 CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_target_user ON public.admin_audit_logs(target_user_id);
 
--- ====================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
--- ====================================================================
+-- 3. ROW LEVEL SECURITY (RLS) ACTIVATION
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.property_media ENABLE ROW LEVEL SECURITY;
@@ -152,7 +140,19 @@ ALTER TABLE public.compliance_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inspections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
 
--- 1. Profiles
+-- 4. SAFE POLICY DROPS (Guaranteed safe now because tables are already created above)
+DROP POLICY IF EXISTS "Public can view active properties" ON public.properties;
+DROP POLICY IF EXISTS "Listers manage their own properties" ON public.properties;
+DROP POLICY IF EXISTS "Public can view media for active properties" ON public.property_media;
+DROP POLICY IF EXISTS "Listers manage their property media" ON public.property_media;
+DROP POLICY IF EXISTS "Listers can view own compliance records" ON public.compliance_records;
+DROP POLICY IF EXISTS "Tenants view own inspections" ON public.inspections;
+DROP POLICY IF EXISTS "Listers view property inspections" ON public.inspections;
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admin logs strictly service role only" ON public.admin_audit_logs;
+
+-- 5. RLS POLICIES CREATION
 CREATE POLICY "Users can view their own profile"
   ON public.profiles FOR SELECT
   USING (clerk_id = auth.jwt()->>'sub');
@@ -161,7 +161,6 @@ CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE
   USING (clerk_id = auth.jwt()->>'sub');
 
--- 2. Properties: Public can view active vacancies
 CREATE POLICY "Public can view active properties"
   ON public.properties FOR SELECT
   USING (status = 'active');
@@ -170,7 +169,6 @@ CREATE POLICY "Listers manage their own properties"
   ON public.properties FOR ALL
   USING (lister_clerk_id = auth.jwt()->>'sub');
 
--- 3. Property Media: Public can view media for active vacancies
 CREATE POLICY "Public can view media for active properties"
   ON public.property_media FOR SELECT
   USING (property_id IN (SELECT id FROM public.properties WHERE status = 'active'));
@@ -179,27 +177,19 @@ CREATE POLICY "Listers manage their property media"
   ON public.property_media FOR ALL
   USING (property_id IN (SELECT id FROM public.properties WHERE lister_clerk_id = auth.jwt()->>'sub'));
 
--- 4. Compliance Records
 CREATE POLICY "Listers can view own compliance records"
   ON public.compliance_records FOR SELECT
   USING (property_id IN (SELECT id FROM public.properties WHERE lister_clerk_id = auth.jwt()->>'sub'));
 
--- 5. Inspections
 CREATE POLICY "Tenants view own inspections"
   ON public.inspections FOR SELECT
   USING (tenant_clerk_id = auth.jwt()->>'sub');
 
--- 6. Admin Logs
 CREATE POLICY "Admin logs strictly service role only"
   ON public.admin_audit_logs FOR ALL
   USING (false);
 
--- ====================================================================
--- INITIAL SEED DATA: 9 VERIFIED DIRECT VACANCIES
--- Across Lagos, Abuja, Port Harcourt, and Enugu
--- ====================================================================
-
--- Seed Profiles
+-- 6. INITIAL SEED PROFILES
 INSERT INTO public.profiles (clerk_id, email, full_name, phone, whatsapp, role, is_verified, city_hub)
 VALUES
   ('seed_landlord_dapo', 'dapo.alabi@gmail.com', 'Engr. Dapo Alabi (Owner)', '+234 803 445 1928', '2348034451928', 'landlord', true, 'lagos'),
@@ -213,7 +203,7 @@ VALUES
   ('seed_landlord_obinna', 'obinna.eze@enuguproperties.ng', 'Chief Obinna Eze (Title Holder)', '+234 806 443 2211', '2348064432211', 'landlord', true, 'enugu')
 ON CONFLICT (clerk_id) DO NOTHING;
 
--- Seed Properties
+-- 7. INITIAL SEED PROPERTIES (9 Verified Vacancies across Lagos, Abuja, PH & Enugu)
 INSERT INTO public.properties (
   id, lister_clerk_id, lister_name, lister_phone, lister_whatsapp, lister_role,
   title, property_kind, category, city, neighborhood, address, latitude, longitude,

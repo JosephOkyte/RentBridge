@@ -128,21 +128,21 @@ export async function POST(request) {
       lister_name: user.fullName || user.firstName || 'Property Custodian',
       lister_email: user.primaryEmailAddress?.emailAddress,
       title,
-      propertyKind,
+      property_kind: propertyKind,
       category,
       city,
       neighborhood,
       address,
-      annualRent: Number(annualRent),
-      cautionDeposit: Number(cautionDeposit),
-      serviceCharge: Number(serviceCharge),
-      agentFee: 0, // Strictly ₦0
-      photoCount: photos.length,
-      minRequiredPhotos,
+      annual_rent: Number(annualRent),
+      caution_deposit: Number(cautionDeposit),
+      service_charge: Number(serviceCharge),
+      agent_fee: 0, // Strictly ₦0
+      photo_count: photos.length,
+      min_required_photos: minRequiredPhotos,
       status, // 'draft' or 'pending_audit'
-      idDocumentType,
-      idNumber,
-      createdAt: new Date().toISOString(),
+      id_document_type: idDocumentType,
+      id_number: idNumber,
+      created_at: new Date().toISOString(),
     };
 
     // Attempt to persist to Supabase
