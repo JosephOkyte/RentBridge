@@ -1,4 +1,5 @@
 import { ClerkProvider } from '@clerk/nextjs';
+import ExtensionErrorGuard from '../components/ExtensionErrorGuard';
 import './globals.css';
 
 export const metadata = {
@@ -12,7 +13,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -27,7 +28,8 @@ export default function RootLayout({ children }) {
             crossOrigin=""
           />
         </head>
-        <body className="min-h-screen bg-[#FBF9F5] text-[#151816] font-['Plus_Jakarta_Sans',sans-serif] antialiased">
+        <body className="min-h-screen bg-[#FBF9F5] text-[#151816] font-['Plus_Jakarta_Sans',sans-serif] antialiased" suppressHydrationWarning>
+          <ExtensionErrorGuard />
           {children}
         </body>
       </html>
