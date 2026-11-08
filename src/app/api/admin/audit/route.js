@@ -17,7 +17,7 @@ export async function GET() {
     // For local dev, provide full operational view
 
     // 1. Pending Verification Queue (Phase 1 Split-screen Audit)
-    const pendingSubmissions = [
+    let pendingSubmissions = [
       {
         id: 'prop-audit-201',
         title: 'Executive 5-Bedroom Fully Detached Duplex with BQ',
@@ -81,6 +81,51 @@ export async function GET() {
       },
     ];
 
+    // Merge live pending submissions from Supabase if any exist
+    try {
+      const adminClient = createAdminClient();
+      const { data: dbProps } = await adminClient
+        .from('properties')
+        .select('*')
+        .eq('status', 'pending_audit')
+        .order('created_at', { ascending: false });
+
+      if (dbProps && dbProps.length > 0) {
+        const liveProps = dbProps.map((p) => ({
+          id: p.id,
+          title: p.title,
+          propertyKind: p.property_kind || p.propertyKind || 'Vacant Space',
+          category: p.category,
+          city: p.city,
+          neighborhood: p.neighborhood,
+          address: p.address,
+          annualRent: p.annual_rent || p.annualRent,
+          cautionDeposit: p.caution_deposit || p.cautionDeposit || 0,
+          serviceCharge: p.service_charge || p.serviceCharge || 0,
+          agentFee: 0,
+          listerRole: p.lister_role || 'landlord',
+          listerName: p.lister_name || 'Property Custodian',
+          listerPhone: p.lister_phone || '+234 800 000 0000',
+          listerEmail: p.lister_email || 'custodian@rentbridge.ng',
+          submittedAt: p.created_at,
+          idDocumentType: p.id_document_type || 'Proof of Custody',
+          idNumber: p.id_number || 'N/A',
+          photoCount: p.photo_count || p.photoCount || 12,
+          minRequiredPhotos: p.min_required_photos || (p.category === 'residential' ? 12 : 17),
+          photos: [
+            { tag: 'Access Road & Gate', url: IMAGES.heroLekkiEntrance },
+            { tag: 'Main Property View', url: IMAGES.heroLagosDuplex },
+            { tag: 'Interior Space', url: IMAGES.interiorLivingRoom },
+          ],
+          deedDocumentUrl: '#',
+          complianceStatus: 'pending_audit',
+        }));
+        pendingSubmissions = [...liveProps, ...pendingSubmissions];
+      }
+    } catch (dbErr) {
+      console.warn('[Admin Audit Queue Supabase query]:', dbErr.message);
+    }
+
     // 2. Incident Desk (Fee Extortion Flags)
     const fraudIncidents = [
       {
@@ -98,7 +143,7 @@ export async function GET() {
     ];
 
     // 3. User Accounts Directory for Stealth Audits
-    const registeredAccounts = [
+    let registeredAccounts = [
       {
         id: 'usr-1',
         clerkId: 'user_2xyzLandlord',
@@ -152,6 +197,30 @@ export async function GET() {
         joinedDate: '2026-11-05',
       },
     ];
+
+    // Merge live profiles from Supabase if present
+    try {
+      const adminClient = createAdminClient();
+      const { data: dbProfiles } = await adminClient.from('profiles').select('*');
+      if (dbProfiles && dbProfiles.length > 0) {
+        const liveUsers = dbProfiles.map((p) => ({
+          id: p.id,
+          clerkId: p.clerk_id,
+          fullName: p.full_name || 'Verified User',
+          email: p.email,
+          phone: p.phone || 'N/A',
+          role: p.role,
+          cityHub: p.city_hub || 'Lagos',
+          isVerified: p.is_verified || false,
+          propertiesCount: 0,
+          activeInspections: 0,
+          joinedDate: p.created_at ? p.created_at.split('T')[0] : '2026-11-08',
+        }));
+        registeredAccounts = [...liveUsers, ...registeredAccounts];
+      }
+    } catch (dbErr) {
+      console.warn('[Admin Audit Accounts Supabase query]:', dbErr.message);
+    }
 
     return NextResponse.json({
       pendingSubmissions,

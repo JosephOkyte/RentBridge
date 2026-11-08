@@ -14,6 +14,11 @@ dist-ssr
 out
 *.local
 .env*.local
+.env
+.env.*
+!.env.example
+!.env*.example
+!env/*.example
 
 # Editor directories and files
 .vscode/*

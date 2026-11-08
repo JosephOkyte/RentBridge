@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Calendar, 
@@ -16,27 +16,24 @@ import {
 } from 'lucide-react';
 
 export default function InspectionsPage() {
+  const [inspections, setInspections] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [selectedInspection, setSelectedInspection] = useState(null);
   const [complaintText, setComplaintText] = useState('');
   const [reportSent, setReportSent] = useState(false);
 
-  const inspections = [
-    {
-      id: 'insp-1',
-      propertyId: 'prop-1',
-      propertyTitle: 'Luxury 4-Bedroom Semi-Detached Duplex',
-      city: 'Lagos',
-      neighborhood: 'Lekki Phase 1, Admiralty Way Axis',
-      scheduledDate: 'Tuesday, 10 Nov 2026',
-      timeSlot: '11:00 AM',
-      status: 'confirmed',
-      listerName: 'Engr. Dapo Alabi (Owner)',
-      listerPhone: '+234 803 445 1928',
-      listerWhatsapp: '2348034451928',
-      roleBadge: 'Verified Landlord',
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/inspections')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.inspections) {
+          setInspections(data.inspections);
+        }
+      })
+      .catch((err) => console.error('Error fetching inspections:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
   const handleOpenReport = (inspection) => {
     setSelectedInspection(inspection);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   Building2, 
@@ -20,43 +20,20 @@ import { IMAGES } from '../../../utils/images';
 
 export default function MyPropertiesPage() {
   const [activeTab, setActiveTab] = useState('all');
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const properties = [
-    {
-      id: 'draft-101',
-      title: 'Contemporary 3-Bedroom Terrace Duplex (Draft)',
-      propertyKind: 'Terrace Duplex',
-      category: 'residential',
-      city: 'Lagos',
-      neighborhood: 'Lekki Phase 1, Admiralty Way Axis',
-      annualRent: 8500000,
-      cautionDeposit: 800000,
-      serviceCharge: 600000,
-      status: 'draft',
-      photoCount: 8,
-      minRequiredPhotos: 12,
-      image: IMAGES.heroLekkiEntrance,
-      createdAt: '2026-11-06',
-      notes: '4 more photos needed (access road, gate, living room) before submitting for verification.',
-    },
-    {
-      id: 'prop-1',
-      title: 'Luxury 4-Bedroom Semi-Detached Duplex',
-      propertyKind: 'Contemporary Duplex',
-      category: 'residential',
-      city: 'Lagos',
-      neighborhood: 'Lekki Phase 1',
-      annualRent: 14000000,
-      cautionDeposit: 1000000,
-      serviceCharge: 1200000,
-      status: 'active',
-      photoCount: 14,
-      minRequiredPhotos: 12,
-      verificationBadge: 'Verified Landlord',
-      image: IMAGES.heroLagosDuplex,
-      createdAt: '2026-10-29',
-    },
-  ];
+  useEffect(() => {
+    fetch('/api/properties?filter=my_listings')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.properties) {
+          setProperties(data.properties);
+        }
+      })
+      .catch((err) => console.error('Error fetching properties:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = properties.filter((p) => {
     if (activeTab === 'active') return p.status === 'active';

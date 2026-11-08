@@ -16,6 +16,8 @@ export default function InspectionModal({ property, onClose }) {
     notes: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -30,9 +32,39 @@ export default function InspectionModal({ property, onClose }) {
 
   if (!property) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      const res = await fetch('/api/inspections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          propertyId: property.id,
+          propertyTitle: property.title,
+          listerName: property.lister?.name || 'Direct Custodian',
+          listerPhone: property.lister?.phone || '',
+          listerEmail: property.lister?.email || 'custodian@rentbridge.ng',
+          scheduledDate: formData.preferredDate || new Date().toISOString().split('T')[0],
+          timeSlot: formData.preferredTime,
+          notes: formData.notes,
+          phone: formData.phone,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit inspection request');
+      }
+
+      setSubmitted(true);
+    } catch (err) {
+      setErrorMessage(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -169,6 +201,14 @@ export default function InspectionModal({ property, onClose }) {
                 </div>
               </div>
 
+              {/* Error Message */}
+              {errorMessage && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
               {/* Lease Term Notice */}
               <div className="p-3 rounded-xl bg-[#F5EFEB] border border-[#E8DFC8] text-xs flex items-center justify-between">
                 <span className="text-[#4B524D]">Agreed Lease Term:</span>
@@ -181,9 +221,16 @@ export default function InspectionModal({ property, onClose }) {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md">
-                <Send className="w-4 h-4" />
-                <span>Confirm Free Inspection</span>
+                disabled={loading}
+                className="w-full py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer">
+                {loading ? (
+                  <span>Transmitting Request...</span>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    <span>Confirm Free Inspection</span>
+                  </>
+                )}
               </button>
             </div>
 

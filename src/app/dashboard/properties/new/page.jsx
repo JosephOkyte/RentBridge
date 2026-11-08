@@ -100,6 +100,22 @@ export default function NewPropertyWizardPage() {
     setUploadedPhotos(uploadedPhotos.filter(p => p.id !== id));
   };
 
+  const handleFileUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const newUploaded = files.map((file, idx) => ({
+      id: `custom-photo-${Date.now()}-${idx}`,
+      name: file.name,
+      url: URL.createObjectURL(file),
+      tag: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Property Photo',
+      file,
+    }));
+
+    setUploadedPhotos((prev) => [...prev, ...newUploaded]);
+    setErrorMessage('');
+  };
+
   // Submit action (either as 'draft' or 'pending_audit')
   const handleAction = async (statusTarget) => {
     setErrorMessage('');
@@ -351,13 +367,27 @@ export default function NewPropertyWizardPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              onClick={handleLoadSamplePhotos}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold border border-[#2D5A43]/20 hover:bg-[#2D5A43] hover:text-white transition-all cursor-pointer">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Load Verified Photo Bundle ({minRequiredPhotos} Photos)</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white text-[#151816] text-xs font-bold border border-[#E8DFC8] hover:bg-[#F5EFEB] transition-all cursor-pointer shadow-xs">
+                <Camera className="w-3.5 h-3.5 text-[#2D5A43]" />
+                <span>Upload Photos</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+
+              <button
+                type="button"
+                onClick={handleLoadSamplePhotos}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold border border-[#2D5A43]/20 hover:bg-[#2D5A43] hover:text-white transition-all cursor-pointer">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Load Verified Bundle ({minRequiredPhotos})</span>
+              </button>
+            </div>
           </div>
 
           {/* Quota Progress Meter */}
