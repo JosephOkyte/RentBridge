@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Users, 
   ShieldCheck, 
@@ -13,7 +14,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Clock,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 
 export default function StealthAccountsMonitorPage() {
@@ -65,17 +67,25 @@ export default function StealthAccountsMonitorPage() {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Title */}
-      <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#151816] text-[#8AE0B3] text-xs font-bold uppercase tracking-wider mb-1">
-          <Eye className="w-3.5 h-3.5" />
-          <span>Stealth Account Oversight</span>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/dashboard/admin"
+          className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shrink-0 shadow-xs"
+          title="Return to Citadel Dashboard">
+          <ArrowLeft className="w-4 h-4 text-[#2D5A43]" />
+        </Link>
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#151816] text-[#8AE0B3] text-xs font-bold uppercase tracking-wider mb-1">
+            <Eye className="w-3.5 h-3.5" />
+            <span>Stealth Account Oversight</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
+            Stealth User Account Monitoring Desk
+          </h1>
+          <p className="text-xs sm:text-sm text-[#8F8372]">
+            Super Admin oversight across Tenants, Landlords, Lawyers, and Caretakers. Inspected silently with zero notifications, emails, or session alerts triggered to account owners.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
-          Stealth User Account Monitoring Desk
-        </h1>
-        <p className="text-xs sm:text-sm text-[#8F8372]">
-          Super Admin oversight across Tenants, Landlords, Lawyers, and Caretakers. Inspected silently with zero notifications, emails, or session alerts triggered to account owners.
-        </p>
       </div>
 
       {/* Security Isolation Guarantee Banner */}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   ShieldCheck, 
   CheckCircle2, 
@@ -15,7 +16,8 @@ import {
   MapPin,
   Clock,
   Sparkles,
-  UserCheck
+  UserCheck,
+  ArrowLeft
 } from 'lucide-react';
 import { formatNaira } from '../../../utils/formatters';
 
@@ -105,17 +107,25 @@ export default function VerificationDeskPage() {
     <div className="space-y-6 animate-fadeIn">
       {/* Title & Phase 1 Protocol */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold uppercase tracking-wider mb-1">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Phase 1 Manual Gatekeeper Protocol</span>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/admin"
+            className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shrink-0 shadow-xs"
+            title="Return to Citadel Dashboard">
+            <ArrowLeft className="w-4 h-4 text-[#2D5A43]" />
+          </Link>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold uppercase tracking-wider mb-1">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Phase 1 Manual Gatekeeper Protocol</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
+              Split-Screen Verification Desk
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8F8372]">
+              Zero automatic publishing: Every listing must be human-audited for street road visibility and deed authenticity before appearing publicly.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
-            Split-Screen Verification Desk
-          </h1>
-          <p className="text-xs sm:text-sm text-[#8F8372]">
-            Zero automatic publishing: Every listing must be human-audited for street road visibility and deed authenticity before appearing publicly.
-          </p>
         </div>
 
         <div className="text-right">

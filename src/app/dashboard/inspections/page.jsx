@@ -188,15 +188,23 @@ export default function InspectionsPage() {
     <div className="space-y-6 animate-fadeIn">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
-            {isLister ? 'Inspection Dispatch Desk' : 'Physical Inspection Viewings'}
-          </h1>
-          <p className="text-xs sm:text-sm text-[#8F8372] mt-0.5">
-            {isLister 
-              ? 'Confirm slots or propose alternate viewing times with prospective tenants. Strictly ₦0 fees.'
-              : 'Direct physical viewings with verified custodians. Strictly ₦0 viewing fee guarantee.'}
-          </p>
+        <div className="flex items-center gap-3">
+          <Link
+            href={isLister ? '/dashboard/landlord' : '/dashboard/tenant'}
+            className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shrink-0 shadow-xs"
+            title="Return to Dashboard">
+            <ArrowLeft className="w-4 h-4 text-[#2D5A43]" />
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
+              {isLister ? 'Inspection Dispatch Desk' : 'Physical Inspection Viewings'}
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8F8372] mt-0.5">
+              {isLister 
+                ? 'Confirm slots or propose alternate viewing times with prospective tenants. Strictly ₦0 fees.'
+                : 'Direct physical viewings with verified custodians. Strictly ₦0 viewing fee guarantee.'}
+            </p>
+          </div>
         </div>
 
         <span className={`px-3.5 py-1.5 rounded-full text-xs font-bold self-start sm:self-auto ${

@@ -120,13 +120,21 @@ export default function MyPropertiesPage() {
     <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
-            Properties & Staged Drafts
-          </h1>
-          <p className="text-xs sm:text-sm text-[#8F8372] mt-0.5">
-            Manage your verified vacancies and continue uploading photos to your 30-day staged drafts.
-          </p>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/landlord"
+            className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shrink-0 shadow-xs"
+            title="Return to Custodian Suite">
+            <ArrowLeft className="w-4 h-4 text-[#2D5A43]" />
+          </Link>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
+              Properties & Staged Drafts
+            </h1>
+            <p className="text-xs sm:text-sm text-[#8F8372] mt-0.5">
+              Manage your verified vacancies and continue uploading photos to your 30-day staged drafts.
+            </p>
+          </div>
         </div>
 
         <Link

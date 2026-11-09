@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
 import { 
   ShieldCheck, 
@@ -17,6 +17,7 @@ import {
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   const adminNav = [
     { name: 'Citadel Overview', href: '/admin', icon: Layers, badge: 'Operations Hub' },
@@ -83,7 +84,36 @@ export default function AdminLayout({ children }) {
       </header>
 
       {/* Main Admin Content Container */}
-      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        {/* Top Back Action Bar */}
+        <div className="flex items-center justify-between pb-3 border-b border-[#E8DFC8]/60">
+          <button
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/dashboard/admin');
+              }
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-[#E8DFC8] text-xs font-bold text-[#4B524D] hover:text-[#151816] hover:bg-[#F5EFEB] transition-all shadow-xs group cursor-pointer">
+            <ArrowLeft className="w-3.5 h-3.5 text-[#2D5A43] group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back</span>
+          </button>
+
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/admin"
+              className="px-3 py-1.5 rounded-lg bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold hover:bg-[#2D5A43] hover:text-white transition-all">
+              Citadel Dashboard
+            </Link>
+            <Link
+              href="/"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-[#8F8372] hover:text-[#151816]">
+              Marketplace
+            </Link>
+          </div>
+        </div>
+
         {children}
       </main>
     </div>

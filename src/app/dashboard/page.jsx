@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { 
   Building2, 
   ShieldCheck, 
   ArrowRight, 
+  ArrowLeft,
   KeyRound, 
   Scale, 
   Layers, 
@@ -111,7 +113,17 @@ export default function DashboardIndexRouter() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-fadeIn">
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-6 animate-fadeIn">
+      {/* Back to Marketplace */}
+      <div>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs font-bold text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shadow-xs group">
+          <ArrowLeft className="w-4 h-4 text-[#2D5A43] group-hover:-translate-x-0.5 transition-transform" />
+          <span>Back to Marketplace</span>
+        </Link>
+      </div>
+
       {/* Role Declaration Header */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#2D5A43] shadow-xl space-y-6">
         <div className="space-y-2">

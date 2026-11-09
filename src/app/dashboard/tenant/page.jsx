@@ -94,6 +94,13 @@ export default function TenantDashboardPage() {
               <Calendar className="w-4 h-4 text-[#8AE0B3]" />
               <span>My Booked Inspections ({inspections.length})</span>
             </Link>
+
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold border border-white/20 transition-all">
+              <ArrowLeft className="w-4 h-4 text-[#8AE0B3]" />
+              <span>Back to Marketplace</span>
+            </Link>
           </div>
         </div>
       </div>

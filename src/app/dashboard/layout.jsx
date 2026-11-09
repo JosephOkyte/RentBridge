@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { UserButton, useUser } from '@clerk/nextjs';
 import { 
   Building2, 
@@ -21,6 +21,7 @@ import {
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isLoaded } = useUser();
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -170,6 +171,30 @@ export default function DashboardLayout({ children }) {
       {/* Main Workspace Area */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="max-w-6xl mx-auto space-y-6">
+          {/* Top Universal Back & Context Bar */}
+          <div className="flex items-center justify-between pb-2 border-b border-[#E8DFC8]/50">
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.history.length > 1) {
+                  router.back();
+                } else {
+                  router.push('/');
+                }
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-[#E8DFC8] text-xs font-bold text-[#4B524D] hover:text-[#151816] hover:bg-[#F5EFEB] transition-all shadow-xs group cursor-pointer">
+              <ArrowLeft className="w-3.5 h-3.5 text-[#2D5A43] group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back</span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-[#8F8372] hover:text-[#151816] hover:bg-white transition-all">
+                <span>Marketplace Home</span>
+              </Link>
+            </div>
+          </div>
+
           {children}
         </div>
       </main>

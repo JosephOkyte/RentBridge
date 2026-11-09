@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { 
   AlertTriangle, 
   ShieldAlert, 
@@ -11,7 +12,8 @@ import {
   Clock, 
   ShieldCheck,
   Search,
-  ExternalLink
+  ExternalLink,
+  ArrowLeft
 } from 'lucide-react';
 
 export default function AntiFraudDeskPage() {
@@ -37,17 +39,25 @@ export default function AntiFraudDeskPage() {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Title */}
-      <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF2F2] text-[#B91C1C] border border-[#FCA5A5] text-xs font-bold uppercase tracking-wider mb-1">
-          <ShieldAlert className="w-4 h-4" />
-          <span>Anti-Agent Enforcement</span>
+      <div className="flex items-center gap-3">
+        <Link
+          href="/dashboard/admin"
+          className="p-2.5 rounded-xl bg-white border border-[#E8DFC8] text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shrink-0 shadow-xs"
+          title="Return to Citadel Dashboard">
+          <ArrowLeft className="w-4 h-4 text-[#2D5A43]" />
+        </Link>
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FEF2F2] text-[#B91C1C] border border-[#FCA5A5] text-xs font-bold uppercase tracking-wider mb-1">
+            <ShieldAlert className="w-4 h-4" />
+            <span>Anti-Agent Enforcement</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
+            Anti-Fraud & Fee Extortion Incident Room
+          </h1>
+          <p className="text-xs sm:text-sm text-[#8F8372]">
+            Zero tolerance for rogue middlemen: Review tenant reports of viewing fees, illegal registration charges, or agent markups.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
-          Anti-Fraud & Fee Extortion Incident Room
-        </h1>
-        <p className="text-xs sm:text-sm text-[#8F8372]">
-          Zero tolerance for rogue middlemen: Review tenant reports of viewing fees, illegal registration charges, or agent markups.
-        </p>
       </div>
 
       {actionNotice && (
