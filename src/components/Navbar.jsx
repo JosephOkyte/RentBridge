@@ -41,13 +41,23 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
 
           {/* Action CTAs (Desktop) */}
           <div className="hidden sm:flex items-center gap-3">
-            <button
-              onClick={onOpenListModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all shadow-sm cursor-pointer">
-              <PlusCircle className="w-4 h-4 text-[#2D5A43]" />
-              <span>List Property</span>
-              <span className="text-[10px] bg-[#2D5A43]/10 text-[#2D5A43] px-1.5 py-0.5 rounded font-bold">Landlords & Reps</span>
-            </button>
+            {isSignedIn ? (
+              <Link
+                href="/dashboard/properties/new"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all shadow-sm cursor-pointer">
+                <PlusCircle className="w-4 h-4 text-[#2D5A43]" />
+                <span>List Property</span>
+                <span className="text-[10px] bg-[#2D5A43]/10 text-[#2D5A43] px-1.5 py-0.5 rounded font-bold">Landlords & Reps</span>
+              </Link>
+            ) : (
+              <Link
+                href="/get-started?intent=list"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all shadow-sm cursor-pointer">
+                <PlusCircle className="w-4 h-4 text-[#2D5A43]" />
+                <span>List Property</span>
+                <span className="text-[10px] bg-[#2D5A43]/10 text-[#2D5A43] px-1.5 py-0.5 rounded font-bold">Landlords & Reps</span>
+              </Link>
+            )}
 
             <button
               onClick={() => onNavigateToSection ? onNavigateToSection('properties') : null}
@@ -57,14 +67,22 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             </button>
 
             {/* Clerk Authentication Controls */}
-            <div className="pl-2 border-l border-[#E8DFC8]">
+            <div className="pl-2 border-l border-[#E8DFC8] flex items-center gap-2">
               {isLoaded && !isSignedIn && (
-                <SignInButton mode="modal">
-                  <button className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-[#2D5A43] hover:bg-[#EBF2ED] transition-all cursor-pointer">
+                <>
+                  <SignInButton mode="modal">
+                    <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#4B524D] hover:text-[#151816] hover:bg-[#F5EFEB] transition-all cursor-pointer">
+                      <span>Sign In</span>
+                    </button>
+                  </SignInButton>
+
+                  <Link
+                    href="/get-started"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black bg-[#2D5A43] text-white hover:bg-[#1E3F2F] transition-all shadow-xs cursor-pointer">
                     <User className="w-4 h-4" />
-                    <span>Sign In</span>
-                  </button>
-                </SignInButton>
+                    <span>Get Started</span>
+                  </Link>
+                </>
               )}
               {isLoaded && isSignedIn && (
                 <div className="flex items-center gap-2">
@@ -90,21 +108,37 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
           {/* Action CTAs (Mobile) */}
           <div className="sm:hidden flex items-center gap-2">
             {isLoaded && !isSignedIn && (
-              <SignInButton mode="modal">
-                <button className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#2D5A43] bg-[#EBF2ED] border border-[#2D5A43]/20">
-                  Sign In
-                </button>
-              </SignInButton>
+              <>
+                <SignInButton mode="modal">
+                  <button className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#4B524D] bg-[#F5EFEB] border border-[#E8DFC8]">
+                    Sign In
+                  </button>
+                </SignInButton>
+                <Link
+                  href="/get-started"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-black text-white bg-[#2D5A43] shadow-xs">
+                  Join
+                </Link>
+              </>
             )}
             {isLoaded && isSignedIn && (
               <UserButton afterSignOutUrl="/" />
             )}
-            <button
-              onClick={onOpenListModal}
-              className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2D5A43] text-white shadow-sm flex items-center gap-1 active:scale-95 transition-transform">
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span>List</span>
-            </button>
+            {isSignedIn ? (
+              <Link
+                href="/dashboard/properties/new"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2D5A43] text-white shadow-sm flex items-center gap-1 active:scale-95 transition-transform">
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>List</span>
+              </Link>
+            ) : (
+              <Link
+                href="/get-started?intent=list"
+                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2D5A43] text-white shadow-sm flex items-center gap-1 active:scale-95 transition-transform">
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>List</span>
+              </Link>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle Navigation Menu"

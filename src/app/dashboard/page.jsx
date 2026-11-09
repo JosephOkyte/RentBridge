@@ -4,26 +4,12 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { 
-  Building2, 
-  ShieldCheck, 
-  ArrowRight, 
-  ArrowLeft,
-  KeyRound, 
-  Scale, 
-  Layers, 
-  Lock,
-  Sparkles,
-  Clock
-} from 'lucide-react';
+import { ShieldCheck, ArrowLeft, KeyRound, Building2, Home, Scale, Lock } from 'lucide-react';
 
 export default function DashboardIndexRouter() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectingRole, setSelectingRole] = useState(false);
-  const [savingRole, setSavingRole] = useState(false);
   const [roleError, setRoleError] = useState('');
 
   useEffect(() => {
@@ -38,6 +24,7 @@ export default function DashboardIndexRouter() {
         const res = await fetch('/api/profile');
         const data = await res.json();
 
+        // 1. If user already has an active profile
         if (data.profile) {
           const role = data.profile.role;
           if (data.isAdmin || role === 'admin') {
@@ -48,23 +35,49 @@ export default function DashboardIndexRouter() {
             router.replace('/dashboard/landlord');
             return;
           }
-          // Default to tenant dashboard
           router.replace('/dashboard/tenant');
           return;
         }
 
-        // Check if admin by clerk metadata or email domain
+        // 2. Check if admin by clerk metadata or primary email
         const email = user.primaryEmailAddress?.emailAddress;
         if (user.publicMetadata?.role === 'admin' || email?.endsWith('@rentbridge.ng') || email === 'josephokyte@gmail.com') {
           router.replace('/dashboard/admin');
           return;
         }
 
-        // No profile found: show role onboarding modal
-        setSelectingRole(true);
+        // 3. Check if role was pre-selected at /get-started (stored in Clerk metadata or cookie)
+        let intendedRole = user.unsafeMetadata?.role || user.publicMetadata?.role;
+        if (!intendedRole && typeof document !== 'undefined') {
+          const cookieMatch = document.cookie.match(/rentbridge_intended_role=([^;]+)/);
+          if (cookieMatch) intendedRole = cookieMatch[1];
+          if (!intendedRole && typeof localStorage !== 'undefined') {
+            intendedRole = localStorage.getItem('rentbridge_role');
+          }
+        }
+
+        if (intendedRole && ['tenant', 'landlord', 'caretaker', 'lawyer'].includes(intendedRole)) {
+          const commitRes = await fetch('/api/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: intendedRole }),
+          });
+          const commitData = await commitRes.json();
+          if (commitRes.ok) {
+            if (intendedRole === 'tenant') {
+              router.replace('/dashboard/tenant');
+            } else {
+              router.replace('/dashboard/landlord');
+            }
+            return;
+          }
+        }
+
+        // 4. If no role was committed yet, redirect to 4-card /get-started
+        router.replace('/get-started');
       } catch (err) {
         console.warn('Dashboard routing check error:', err);
-        setSelectingRole(true);
+        router.replace('/get-started');
       } finally {
         setLoading(false);
       }
@@ -73,133 +86,12 @@ export default function DashboardIndexRouter() {
     evaluateRoute();
   }, [user, isLoaded, router]);
 
-  // Handle Initial Role Commitment (Permanent & Locked)
-  const handleLockRole = async (chosenRole) => {
-    setSavingRole(true);
-    setRoleError('');
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: chosenRole }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to initialize account role.');
-      }
-
-      // Redirect immediately to the dedicated dashboard URL
-      if (chosenRole === 'tenant') {
-        router.replace('/dashboard/tenant');
-      } else {
-        router.replace('/dashboard/landlord');
-      }
-    } catch (err) {
-      setRoleError(err.message);
-      setSavingRole(false);
-    }
-  };
-
-  if (loading || (!selectingRole && !roleError)) {
-    return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
-        <div className="w-12 h-12 rounded-full border-4 border-[#2D5A43] border-t-transparent animate-spin"></div>
-        <div className="text-center space-y-1">
-          <p className="text-sm font-bold text-[#151816]">Routing to your dedicated dashboard...</p>
-          <p className="text-xs text-[#8F8372]">Direct Nigerian real estate with ₦0 middleman extortion</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 space-y-6 animate-fadeIn">
-      {/* Back to Marketplace */}
-      <div>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs font-bold text-[#4B524D] hover:bg-[#F5EFEB] hover:text-[#151816] transition-all shadow-xs group">
-          <ArrowLeft className="w-4 h-4 text-[#2D5A43] group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Marketplace</span>
-        </Link>
-      </div>
-
-      {/* Role Declaration Header */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#2D5A43] shadow-xl space-y-6">
-        <div className="space-y-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF2ED] text-[#2D5A43] text-xs font-bold uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4" />
-            <span>Strict Anti-Middleman Protocol</span>
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#151816]">
-            Select Your Dedicated Experience
-          </h1>
-          <p className="text-sm text-[#4B524D] leading-relaxed">
-            To eliminate street agent impersonation and guarantee zero inspection fee extortion across Nigeria, RentBridge enforces a strict single-role policy. Once committed, your account URL and permissions are permanent.
-          </p>
-        </div>
-
-        {roleError && (
-          <div className="p-4 rounded-xl bg-red-50 text-red-700 text-xs font-bold border border-red-200">
-            {roleError}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Option A: Tenant Portal */}
-          <button
-            onClick={() => handleLockRole('tenant')}
-            disabled={savingRole}
-            className="p-6 rounded-2xl border-2 border-[#E8DFC8] hover:border-[#2D5A43] hover:bg-[#F5EFEB] text-left transition-all group cursor-pointer relative overflow-hidden">
-            <div className="w-12 h-12 rounded-xl bg-[#E0F2FE] text-[#0369A1] flex items-center justify-center font-bold mb-4 group-hover:scale-105 transition-transform">
-              <KeyRound className="w-6 h-6" />
-            </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-bold text-[#0369A1] bg-sky-100 px-2 py-0.5 rounded-md mb-2">
-              <span>/dashboard/tenant</span>
-            </div>
-            <h3 className="text-lg font-black text-[#151816] group-hover:text-[#2D5A43]">
-              I am a Prospective Tenant
-            </h3>
-            <p className="text-xs text-[#4B524D] mt-2 leading-relaxed">
-              Find verified direct residential & commercial properties in Lagos, Abuja, Port Harcourt & Enugu. Enjoy guaranteed ₦0 inspection fees and 0% agent commission.
-            </p>
-            <div className="mt-5 flex items-center gap-1.5 text-xs font-black text-[#2D5A43]">
-              <span>Proceed to Tenant Portal</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </button>
-
-          {/* Option B: Landlord / Custodian Suite */}
-          <button
-            onClick={() => handleLockRole('landlord')}
-            disabled={savingRole}
-            className="p-6 rounded-2xl border-2 border-[#E8DFC8] hover:border-[#2D5A43] hover:bg-[#F5EFEB] text-left transition-all group cursor-pointer relative overflow-hidden">
-            <div className="w-12 h-12 rounded-xl bg-[#EBF2ED] text-[#2D5A43] flex items-center justify-center font-bold mb-4 group-hover:scale-105 transition-transform">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-bold text-[#2D5A43] bg-emerald-100 px-2 py-0.5 rounded-md mb-2">
-              <span>/dashboard/landlord</span>
-            </div>
-            <h3 className="text-lg font-black text-[#151816] group-hover:text-[#2D5A43]">
-              I am a Property Custodian
-            </h3>
-            <p className="text-xs text-[#4B524D] mt-2 leading-relaxed">
-              Direct Landlords, verified Estate Lawyers, and accredited Caretakers. Stage listings with 30-day drafts, meet photo quotas, and dispatch viewings directly to tenants.
-            </p>
-            <div className="mt-5 flex items-center gap-1.5 text-xs font-black text-[#2D5A43]">
-              <span>Proceed to Custodian Suite</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </button>
-        </div>
-
-        {/* Anti-Agent Lock Notice */}
-        <div className="p-4 rounded-2xl bg-[#F5EFEB] border border-[#E2D7C8] flex items-start gap-3 text-xs text-[#4B524D]">
-          <Lock className="w-4 h-4 text-[#2D5A43] shrink-0 mt-0.5" />
-          <p>
-            <strong className="text-[#151816]">RentBridge Separation Policy:</strong> A landlord who wants to rent a home must register using a separate tenant email. Similarly, tenants cannot list properties. This eliminates middleman disguise and maintains 100% marketplace integrity.
-          </p>
-        </div>
+    <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+      <div className="w-12 h-12 rounded-full border-4 border-[#2D5A43] border-t-transparent animate-spin"></div>
+      <div className="text-center space-y-1">
+        <p className="text-sm font-bold text-[#151816]">Routing to your dedicated RentBridge portal...</p>
+        <p className="text-xs text-[#8F8372]">Direct Nigerian real estate • Strictly ₦0 middleman fees</p>
       </div>
     </div>
   );

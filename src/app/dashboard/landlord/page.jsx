@@ -28,6 +28,7 @@ import {
   Lock,
   ArrowLeft
 } from 'lucide-react';
+import ProfilePhotoModal from '../../../components/ProfilePhotoModal';
 import { formatNaira } from '../../../utils/formatters';
 
 export default function LandlordDashboardPage() {
@@ -37,6 +38,7 @@ export default function LandlordDashboardPage() {
   const [properties, setProperties] = useState([]);
   const [inspections, setInspections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -109,6 +111,13 @@ export default function LandlordDashboardPage() {
               <Calendar className="w-4 h-4 text-[#8AE0B3]" />
               <span>Inspection Dispatcher ({inspections.length})</span>
             </Link>
+
+            <button
+              onClick={() => setPhotoModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold border border-white/20 transition-all cursor-pointer">
+              <Camera className="w-4 h-4 text-[#8AE0B3]" />
+              <span>{user?.imageUrl ? 'Change Photo' : 'Upload Personal Photo'}</span>
+            </button>
 
             <Link
               href="/"
@@ -273,6 +282,14 @@ export default function LandlordDashboardPage() {
           </div>
         )}
       </div>
+
+      <ProfilePhotoModal
+        isOpen={photoModalOpen}
+        onClose={() => setPhotoModalOpen(false)}
+        onPhotoUpdated={() => {
+          if (typeof window !== 'undefined') window.location.reload();
+        }}
+      />
     </div>
   );
 }

@@ -334,10 +334,19 @@ export default function InspectionsPage() {
                 {/* 1. LISTER CONTROLS */}
                 {isLister && (
                   <div className="p-4 rounded-2xl bg-[#F5EFEB] border border-[#E2D7C8] space-y-3 lg:w-80 shrink-0">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-[#8F8372] block">Prospective Tenant</span>
-                      <p className="text-xs font-extrabold text-[#151816] mt-0.5">{item.tenantName || item.tenant_name}</p>
-                      <p className="text-[11px] text-[#4B524D]">{item.tenantPhone || item.tenant_phone}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white ring-2 ring-[#0369A1]/30 overflow-hidden flex items-center justify-center shrink-0">
+                        {item.tenantAvatar || item.tenant_avatar ? (
+                          <img src={item.tenantAvatar || item.tenant_avatar} alt="Tenant" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-[#0369A1]" />
+                        )}
+                      </div>
+                      <div className="overflow-hidden">
+                        <span className="text-[10px] uppercase font-bold text-[#8F8372] block">Prospective Tenant</span>
+                        <p className="text-xs font-extrabold text-[#151816] truncate">{item.tenantName || item.tenant_name}</p>
+                        <p className="text-[11px] text-[#4B524D]">{item.tenantPhone || item.tenant_phone}</p>
+                      </div>
                     </div>
 
                     {isRequested ? (
@@ -369,10 +378,19 @@ export default function InspectionsPage() {
                 {/* 2. TENANT CONTROLS */}
                 {!isLister && (
                   <div className="p-4 rounded-2xl bg-[#F5EFEB] border border-[#E2D7C8] space-y-3 lg:w-80 shrink-0">
-                    <div>
-                      <span className="text-[10px] uppercase font-bold text-[#8F8372] block">Verified Custodian Contact</span>
-                      <p className="text-xs font-extrabold text-[#151816] mt-0.5">{item.listerName || item.lister_name}</p>
-                      <p className="text-[11px] text-[#4B524D]">{item.listerPhone || item.lister_phone}</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-white ring-2 ring-[#2D5A43]/30 overflow-hidden flex items-center justify-center shrink-0">
+                        {item.listerAvatar || item.lister_avatar ? (
+                          <img src={item.listerAvatar || item.lister_avatar} alt="Custodian" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-[#2D5A43]" />
+                        )}
+                      </div>
+                      <div className="overflow-hidden">
+                        <span className="text-[10px] uppercase font-bold text-[#8F8372] block">Verified Custodian</span>
+                        <p className="text-xs font-extrabold text-[#151816] truncate">{item.listerName || item.lister_name}</p>
+                        <p className="text-[11px] text-[#4B524D]">{item.listerPhone || item.lister_phone}</p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">

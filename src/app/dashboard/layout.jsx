@@ -16,8 +16,10 @@ import {
   Heart,
   Search,
   Sparkles,
-  HelpCircle
+  HelpCircle,
+  Camera
 } from 'lucide-react';
+import ProfilePhotoModal from '../../components/ProfilePhotoModal';
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname();
@@ -25,6 +27,7 @@ export default function DashboardLayout({ children }) {
   const { user, isLoaded } = useUser();
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchProfile() {
@@ -98,31 +101,53 @@ export default function DashboardLayout({ children }) {
             </Link>
           </div>
 
-          {/* User Status Card */}
-          <div className="p-4 mx-4 my-4 rounded-2xl bg-[#F5EFEB] border border-[#E2D7C8] flex items-center gap-3">
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: 'w-10 h-10 ring-2 ring-[#2D5A43]/40',
-                },
-              }}
-            />
-            <div className="overflow-hidden">
-              <p className="text-xs font-bold text-[#151816] truncate">
-                {user?.fullName || user?.firstName || 'Verified User'}
-              </p>
-              <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full capitalize ${
-                userRole === 'admin'
-                  ? 'bg-red-100 text-red-700 border border-red-300'
-                  : isLister 
-                  ? 'bg-[#EBF2ED] text-[#2D5A43]' 
-                  : 'bg-[#E0F2FE] text-[#0369A1]'
-              }`}>
-                <ShieldCheck className="w-3 h-3" />
-                <span>{userRole === 'admin' ? 'Super Admin' : userRole === 'tenant' ? 'Verified Tenant' : `Verified ${userRole}`}</span>
-              </span>
+          {/* User Status Card with Photo Update Action */}
+          <div className="p-3.5 mx-4 my-4 rounded-2xl bg-[#F5EFEB] border border-[#E2D7C8] flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="relative group shrink-0">
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: 'w-10 h-10 ring-2 ring-[#2D5A43]/40',
+                    },
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setPhotoModalOpen(true)}
+                  className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#2D5A43] text-white flex items-center justify-center shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                  title="Upload Personal Photo">
+                  <Camera className="w-2.5 h-2.5" />
+                </button>
+              </div>
+
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-[#151816] truncate">
+                  {user?.fullName || user?.firstName || 'Verified User'}
+                </p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-2 py-0.5 rounded-full capitalize ${
+                    userRole === 'admin'
+                      ? 'bg-red-100 text-red-700 border border-red-300'
+                      : isLister 
+                      ? 'bg-[#EBF2ED] text-[#2D5A43]' 
+                      : 'bg-[#E0F2FE] text-[#0369A1]'
+                  }`}>
+                    <ShieldCheck className="w-2.5 h-2.5" />
+                    <span>{userRole === 'admin' ? 'Super Admin' : userRole === 'tenant' ? 'Verified Tenant' : `Verified ${userRole}`}</span>
+                  </span>
+                </div>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={() => setPhotoModalOpen(true)}
+              className="p-1.5 rounded-lg text-[#8F8372] hover:text-[#2D5A43] hover:bg-white transition-all shrink-0 cursor-pointer"
+              title="Upload / Change Photo">
+              <Camera className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Navigation Links */}
@@ -198,6 +223,18 @@ export default function DashboardLayout({ children }) {
           {children}
         </div>
       </main>
+
+      {/* Profile Photo Uploader Modal */}
+      <ProfilePhotoModal
+        isOpen={photoModalOpen}
+        onClose={() => setPhotoModalOpen(false)}
+        onPhotoUpdated={() => {
+          // Trigger refresh of user image
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }}
+      />
     </div>
   );
 }

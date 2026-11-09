@@ -29,6 +29,7 @@ CREATE TABLE public.profiles (
   clerk_id TEXT UNIQUE NOT NULL,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT NOT NULL,
+  avatar_url TEXT,
   phone TEXT,
   whatsapp TEXT,
   role TEXT NOT NULL DEFAULT 'tenant' CHECK (role IN ('tenant', 'landlord', 'caretaker', 'lawyer', 'admin')),
@@ -38,6 +39,8 @@ CREATE TABLE public.profiles (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar_url TEXT;
 
 CREATE INDEX idx_profiles_clerk_id ON public.profiles(clerk_id);
 CREATE INDEX idx_profiles_email ON public.profiles(email);

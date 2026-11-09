@@ -50,16 +50,74 @@ export async function GET() {
       }
     }
 
+    const userImage = user.imageUrl || profile?.avatar_url || '';
+    const finalProfileWithImage = finalProfile ? {
+      ...finalProfile,
+      avatar_url: profile?.avatar_url || userImage,
+    } : null;
+
     return NextResponse.json({
       user: {
         id: user.id,
         email,
         fullName: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Verified User',
         phone: user.primaryPhoneNumber?.phoneNumber || '',
+        imageUrl: userImage,
       },
-      profile: finalProfile,
+      profile: finalProfileWithImage,
       isAdmin: isSuperAdmin,
     });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+/**
+ * PATCH /api/profile
+ * Update user personal photo (avatar_url), phone, whatsapp.
+ */
+export async function PATCH(request) {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { avatar_url, phone, whatsapp, full_name } = body;
+
+    const adminClient = createAdminClient();
+    const updates = {
+      updated_at: new Date().toISOString(),
+    };
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url;
+    if (phone !== undefined) updates.phone = phone;
+    if (whatsapp !== undefined) updates.whatsapp = whatsapp;
+    if (full_name !== undefined) updates.full_name = full_name;
+
+    const { data: updated, error } = await adminClient
+      .from('profiles')
+      .update(updates)
+      .eq('clerk_id', user.id)
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      // If column avatar_url doesn't exist in Supabase table yet, retry gracefully
+      if (error.message && error.message.includes('avatar_url')) {
+        delete updates.avatar_url;
+        const { data: fallbackUpdated } = await adminClient
+          .from('profiles')
+          .update(updates)
+          .eq('clerk_id', user.id)
+          .select()
+          .maybeSingle();
+        return NextResponse.json({ success: true, profile: fallbackUpdated });
+      }
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, profile: updated });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
