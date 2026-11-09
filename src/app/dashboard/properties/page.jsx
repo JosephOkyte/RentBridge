@@ -99,7 +99,7 @@ export default function MyPropertiesPage() {
         </p>
         <div className="pt-2">
           <Link
-            href="/dashboard"
+            href="/dashboard/tenant"
             className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold shadow-md hover:bg-[#1E3F2F] transition-all">
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Tenant Sanctuary</span>

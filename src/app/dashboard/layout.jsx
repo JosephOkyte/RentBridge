@@ -49,19 +49,31 @@ export default function DashboardLayout({ children }) {
 
   // Strict role-specific navigation menus
   const tenantNavigation = [
-    { name: 'Tenant Overview', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Tenant Overview', href: '/dashboard/tenant', icon: LayoutDashboard },
     { name: 'Booked Inspections (₦0 Fee)', href: '/dashboard/inspections', icon: Calendar },
     { name: 'Browse Direct Properties', href: '/#properties', icon: Search },
   ];
 
   const listerNavigation = [
-    { name: 'Portfolio Overview', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Portfolio Overview', href: '/dashboard/landlord', icon: LayoutDashboard },
     { name: 'Properties & Staged Drafts', href: '/dashboard/properties', icon: Building2 },
     { name: 'Stage New Listing', href: '/dashboard/properties/new', icon: PlusCircle },
     { name: 'Inspection Dispatcher', href: '/dashboard/inspections', icon: Calendar },
   ];
 
-  const navigation = isLister ? listerNavigation : tenantNavigation;
+  const adminNavigation = [
+    { name: 'Citadel Operations Hub', href: '/dashboard/admin', icon: ShieldCheck },
+    { name: 'Gatekeeper Desk (Phase 1)', href: '/admin/verification', icon: Lock },
+    { name: 'Custodian Suite', href: '/dashboard/landlord', icon: Building2 },
+    { name: 'Tenant Sanctuary', href: '/dashboard/tenant', icon: Search },
+    { name: 'Inspection Dispatcher', href: '/dashboard/inspections', icon: Calendar },
+  ];
+
+  const navigation = isAdmin 
+    ? adminNavigation 
+    : isLister 
+    ? listerNavigation 
+    : tenantNavigation;
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] flex flex-col md:flex-row text-[#151816]">
@@ -116,7 +128,7 @@ export default function DashboardLayout({ children }) {
           <nav className="px-4 space-y-1.5">
             <div className="pb-1 px-3">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#8F8372]">
-                {isLister ? 'Portfolio Management' : 'Renter Sanctuary'}
+                {isAdmin ? 'Platform Operations' : isLister ? 'Portfolio Management' : 'Renter Sanctuary'}
               </span>
             </div>
 
@@ -137,26 +149,6 @@ export default function DashboardLayout({ children }) {
                 </Link>
               );
             })}
-
-            {/* Quick Admin Navigation Switcher (Strictly for Admins) */}
-            {isAdmin && (
-              <div className="pt-4 border-t border-[#E8DFC8]/60 mt-4">
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#8F8372] px-3.5 mb-2">
-                  Super Admin Citadel
-                </p>
-                <Link
-                  href="/admin/verification"
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold bg-[#EBF2ED] text-[#2D5A43] hover:bg-[#2D5A43] hover:text-white transition-all">
-                  <span className="flex items-center gap-2">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Gatekeeper Desk</span>
-                  </span>
-                  <span className="text-[10px] bg-[#2D5A43]/20 px-1.5 py-0.5 rounded font-mono font-bold">
-                    Phase 1
-                  </span>
-                </Link>
-              </div>
-            )}
           </nav>
         </div>
 
