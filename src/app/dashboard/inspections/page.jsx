@@ -17,7 +17,8 @@ import {
   CalendarCheck,
   CalendarClock,
   User,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft
 } from 'lucide-react';
 
 export default function InspectionsPage() {
