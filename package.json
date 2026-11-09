@@ -8,15 +8,12 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "oxlint",
-    "vite:dev": "node ./node_modules/vite/bin/vite.js --host",
-    "vite:build": "node ./node_modules/vite/bin/vite.js build"
+    "lint": "oxlint"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.25",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.119.0",
-    "@tailwindcss/vite": "^4.3.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.64.0",
     "next": "^16.4.5",
@@ -31,9 +28,7 @@
     "@tailwindcss/postcss": "^4.3.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^4.3.4",
     "oxlint": "^1.89.0",
-    "postcss": "^8.5.32",
-    "vite": "^6.2.0"
+    "postcss": "^8.5.32"
   }
 }
