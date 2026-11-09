@@ -26,12 +26,29 @@ export async function GET() {
 
     const email = user.primaryEmailAddress?.emailAddress || '';
     const isClerkAdmin = user.publicMetadata?.role === 'admin';
-    const isAdminEmail = email.endsWith('@rentbridge.ng') || email === 'admin@rentbridge.ng';
+    const isAdminEmail = email.endsWith('@rentbridge.ng') || email === 'admin@rentbridge.ng' || email === 'josephokyte@gmail.com';
     const isSuperAdmin = isClerkAdmin || isAdminEmail || profile?.role === 'admin';
 
-    const finalProfile = profile 
-      ? { ...profile, role: isSuperAdmin ? 'admin' : profile.role } 
-      : (isSuperAdmin ? { role: 'admin', is_verified: true, email, full_name: user.fullName || 'Admin' } : null);
+    let finalProfile = profile;
+    if (isSuperAdmin) {
+      if (!profile) {
+        const { data: createdAdmin } = await adminClient
+          .from('profiles')
+          .upsert({
+            clerk_id: user.id,
+            email,
+            full_name: user.fullName || 'Super Admin',
+            role: 'admin',
+            is_verified: true,
+            city_hub: 'lagos',
+          })
+          .select()
+          .maybeSingle();
+        finalProfile = createdAdmin || { role: 'admin', is_verified: true, email, full_name: user.fullName || 'Admin' };
+      } else {
+        finalProfile = { ...profile, role: 'admin' };
+      }
+    }
 
     return NextResponse.json({
       user: {
