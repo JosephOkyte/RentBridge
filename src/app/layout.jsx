@@ -1,5 +1,6 @@
 import { ClerkProvider } from '@clerk/nextjs';
 import ExtensionErrorGuard from '../components/ExtensionErrorGuard';
+import AdaChatWidget from '../components/AdaChatWidget';
 import './globals.css';
 
 export const metadata = {
@@ -74,6 +75,7 @@ export default function RootLayout({ children }) {
         <body className="min-h-screen bg-[#FBF9F5] text-[#151816] font-['Plus_Jakarta_Sans',sans-serif] antialiased" suppressHydrationWarning>
           <ExtensionErrorGuard />
           {children}
+          <AdaChatWidget />
         </body>
       </html>
     </ClerkProvider>
