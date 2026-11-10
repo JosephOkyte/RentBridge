@@ -6,7 +6,14 @@ export const metadata = {
   title: 'RentBridge | Bridging the Gap Between Landlords and Tenants in Nigeria',
   description: 'Nigeria\'s verified direct rental marketplace connecting tenants directly with landlords, caretakers, and legal custodians. ₦0 viewing fees and 0% agency cuts across Lagos, Abuja, Port Harcourt, and Enugu.',
   icons: {
-    icon: '/favicon.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.png', sizes: '32x32', type: 'image/png' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 };
 
