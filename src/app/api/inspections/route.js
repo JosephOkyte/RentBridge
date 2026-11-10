@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '../../../lib/supabase/server';
 import { createAdminClient } from '../../../lib/supabase/admin';
-import { sendInspectionBookedEmails, sendFraudReportAlertEmail } from '../../../lib/resend/emails';
+import {
+  notifyInspectionBooked,
+  notifyGatePassConfirmed,
+  notifyAppointmentLocked,
+  notifyAlternateTimeProposed,
+  notifyExtortionReported,
+} from '../../../lib/notifications';
 
 /**
  * GET: Fetch inspections for the signed-in user (isolated by tenant or lister role)
@@ -109,20 +115,18 @@ export async function POST(request) {
       console.warn('[Supabase DB notice]:', dbErr.message);
     }
 
-    // Trigger dual transactional emails via Resend
-    if (tenantEmail) {
-      await sendInspectionBookedEmails({
-        tenantEmail,
-        tenantName,
-        tenantPhone,
-        listerEmail,
-        listerName,
-        listerPhone,
-        propertyTitle,
-        scheduledDate,
-        timeSlot,
-      });
-    }
+    // Trigger dual transactional Email (Resend) + WhatsApp alerts
+    await notifyInspectionBooked({
+      tenantEmail,
+      tenantName,
+      tenantPhone,
+      listerEmail,
+      listerName,
+      listerPhone,
+      propertyTitle,
+      scheduledDate,
+      timeSlot,
+    });
 
     return NextResponse.json({
       success: true,
@@ -160,42 +164,92 @@ export async function PATCH(request) {
 
     // 1. Lister confirms requested inspection slot
     if (action === 'confirm_slot') {
+      let currentInspection = null;
       try {
-        await adminClient
+        const { data } = await adminClient
           .from('inspections')
           .update({ 
             status: 'confirmed', 
             notes: reportNotes ? `Confirmed by custodian: ${reportNotes}` : 'Confirmed by custodian.' 
           })
-          .eq('id', inspectionId);
+          .eq('id', inspectionId)
+          .select()
+          .maybeSingle();
+        currentInspection = data;
       } catch (dbErr) {
         console.warn('[Supabase DB notice]:', dbErr.message);
       }
 
+      // Dispatch Gate Pass via Email + WhatsApp to Tenant
+      const passCode = `RB-${Math.floor(1000 + Math.random() * 9000)}`;
+      await notifyGatePassConfirmed({
+        tenantEmail: currentInspection?.tenant_email || body.tenantEmail,
+        tenantName: currentInspection?.tenant_name || body.tenantName || 'Tenant',
+        tenantPhone: currentInspection?.tenant_phone || body.tenantPhone,
+        propertyTitle: currentInspection?.property_title || propertyTitle || 'Verified Property',
+        address: currentInspection?.property_address || body.address,
+        scheduledDate: currentInspection?.scheduled_at || body.scheduledDate,
+        timeSlot: currentInspection?.time_slot || body.timeSlot,
+        custodianName: listerName || currentInspection?.lister_name || user.fullName || 'Property Custodian',
+        custodianPhone: currentInspection?.lister_phone || user.primaryPhoneNumber?.phoneNumber || '',
+        passCode,
+      });
+
+      // Dispatch Appointment Lock confirmation to Custodian
+      await notifyAppointmentLocked({
+        custodianEmail: user.primaryEmailAddress?.emailAddress,
+        custodianName: user.fullName || 'Property Custodian',
+        custodianPhone: user.primaryPhoneNumber?.phoneNumber,
+        propertyTitle: currentInspection?.property_title || propertyTitle || 'Verified Property',
+        address: currentInspection?.property_address || body.address,
+        scheduledDate: currentInspection?.scheduled_at || body.scheduledDate,
+        timeSlot: currentInspection?.time_slot || body.timeSlot,
+        tenantName: currentInspection?.tenant_name || body.tenantName || 'Tenant',
+        tenantPhone: currentInspection?.tenant_phone || body.tenantPhone,
+        passCode,
+      });
+
       return NextResponse.json({
         success: true,
-        message: 'Inspection slot confirmed. The tenant has been notified with your direct contact details.',
+        passCode,
+        message: 'Inspection slot confirmed. The tenant has been sent their official Gate Pass via Email and WhatsApp.',
       });
     }
 
     // 2. Lister suggests alternate date / time
     if (action === 'suggest_alternate') {
+      let currentInspection = null;
       try {
-        await adminClient
+        const { data } = await adminClient
           .from('inspections')
           .update({
             scheduled_at: alternateDate,
             time_slot: alternateTimeSlot,
             notes: `Custodian proposed alternate time: ${alternateDate} at ${alternateTimeSlot}. ${reportNotes || ''}`,
           })
-          .eq('id', inspectionId);
+          .eq('id', inspectionId)
+          .select()
+          .maybeSingle();
+        currentInspection = data;
       } catch (dbErr) {
         console.warn('[Supabase DB notice]:', dbErr.message);
       }
 
+      // Dispatch alternate time alert via Email + WhatsApp
+      await notifyAlternateTimeProposed({
+        tenantEmail: currentInspection?.tenant_email || body.tenantEmail,
+        tenantName: currentInspection?.tenant_name || body.tenantName || 'Tenant',
+        tenantPhone: currentInspection?.tenant_phone || body.tenantPhone,
+        propertyTitle: currentInspection?.property_title || propertyTitle || 'Verified Property',
+        custodianName: listerName || user.fullName || 'Property Custodian',
+        originalDate: currentInspection?.scheduled_at || 'original date',
+        proposedDate: alternateDate,
+        proposedSlot: alternateTimeSlot,
+      });
+
       return NextResponse.json({
         success: true,
-        message: `Alternate time proposed (${alternateDate} at ${alternateTimeSlot}). Awaiting tenant acceptance.`,
+        message: `Alternate time proposed (${alternateDate} at ${alternateTimeSlot}). Tenant notified via Email and WhatsApp.`,
       });
     }
 
@@ -248,9 +302,10 @@ export async function PATCH(request) {
         console.warn('[Supabase DB notice]:', dbErr.message);
       }
 
-      // Notify RentBridge Compliance Desk via Resend
-      await sendFraudReportAlertEmail({
+      // Notify RentBridge Compliance Desk via Email + WhatsApp
+      await notifyExtortionReported({
         adminEmail: process.env.ADMIN_ALERT_EMAIL || 'admin@rentbridge.ng',
+        adminPhone: process.env.ADMIN_WHATSAPP_PHONE,
         propertyTitle: propertyTitle || 'Reported Listing',
         listerName: listerName || 'Accused Custodian',
         tenantName: user.fullName || user.firstName || 'Reporting Tenant',

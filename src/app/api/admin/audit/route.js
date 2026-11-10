@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createAdminClient } from '../../../../lib/supabase/admin';
-import { sendPropertyApprovedEmail, sendRevisionRequestedEmail } from '../../../../lib/resend/emails';
+import {
+  notifyPropertyApproved,
+  notifyRevisionRequested,
+  notifyAccountBlacklisted,
+} from '../../../../lib/notifications';
 import { IMAGES } from '../../../../utils/images';
 
 /**
@@ -268,15 +272,14 @@ export async function POST(request) {
         console.warn('[Supabase DB notice]:', dbErr.message);
       }
 
-      // Dispatched celebratory live email via Resend
-      if (listerEmail) {
-        await sendPropertyApprovedEmail({
-          listerEmail,
-          listerName: listerName || 'Property Custodian',
-          propertyTitle: propertyTitle || 'Your Property',
-          city: city || 'Nigeria',
-        });
-      }
+      // Dispatched celebratory live alert via Email + WhatsApp
+      await notifyPropertyApproved({
+        listerEmail,
+        listerName: listerName || 'Property Custodian',
+        listerPhone: body.listerPhone,
+        propertyTitle: propertyTitle || 'Your Property',
+        city: city || 'Nigeria',
+      });
 
       return NextResponse.json({
         success: true,
@@ -306,15 +309,14 @@ export async function POST(request) {
         console.warn('[Supabase DB notice]:', dbErr.message);
       }
 
-      // Dispatch feedback email via Resend
-      if (listerEmail) {
-        await sendRevisionRequestedEmail({
-          listerEmail,
-          listerName: listerName || 'Property Custodian',
-          propertyTitle: propertyTitle || 'Your Property',
-          feedbackNotes,
-        });
-      }
+      // Dispatch feedback alert via Email + WhatsApp
+      await notifyRevisionRequested({
+        listerEmail,
+        listerName: listerName || 'Property Custodian',
+        listerPhone: body.listerPhone,
+        propertyTitle: propertyTitle || 'Your Property',
+        feedbackNotes,
+      });
 
       return NextResponse.json({
         success: true,
@@ -350,9 +352,22 @@ export async function POST(request) {
 
     // 4. FREEZE & BLACKLIST
     if (action === 'blacklist') {
+      const blacklistedEmail = body.userEmail || listerEmail;
+      const blacklistedName = body.userName || listerName || 'Account Holder';
+      const blacklistReason = reason || 'Violation of RentBridge Zero Inspection Fee Guarantee (Inspection fee / registration demand reported)';
+
+      if (blacklistedEmail) {
+        await notifyAccountBlacklisted({
+          userEmail: blacklistedEmail,
+          userName: blacklistedName,
+          userPhone: body.userPhone,
+          reason: blacklistReason,
+        });
+      }
+
       return NextResponse.json({
         success: true,
-        message: `Listing frozen and telephone number added to RentBridge national anti-agent blacklist.`,
+        message: `Listing frozen and telephone number added to RentBridge national anti-agent blacklist. Formal notice dispatched.`,
       });
     }
 

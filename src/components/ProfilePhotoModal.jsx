@@ -180,3 +180,4 @@ export default function ProfilePhotoModal({ isOpen, onClose, onPhotoUpdated }) {
     </div>
   );
 }
+

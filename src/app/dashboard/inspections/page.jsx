@@ -69,6 +69,14 @@ export default function InspectionsPage() {
 
   const isLister = ['landlord', 'lawyer', 'caretaker'].includes(profile?.role);
 
+  const getCleanPhone = (phone) => {
+    if (!phone) return '';
+    const digits = String(phone).replace(/[^\d]/g, '');
+    if (digits.startsWith('0') && digits.length === 11) return '234' + digits.slice(1);
+    if (digits.startsWith('234')) return digits;
+    return digits;
+  };
+
   // Lister: Confirm Slot
   const handleConfirmSlot = async (item) => {
     setProcessingAction(true);
@@ -306,6 +314,21 @@ export default function InspectionsPage() {
                     </div>
                   </div>
 
+                  {/* Official Gate Pass Badge when Confirmed */}
+                  {isConfirmed && (
+                    <div className="p-3.5 rounded-2xl bg-[#EBF2ED] border border-[#2D5A43]/30 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] uppercase font-bold text-[#2D5A43] block">Compound Gate Pass Code</span>
+                        <span className="text-base font-black font-mono text-[#1E3F2F]">
+                          {item.pass_code || `RB-${String(item.id).replace(/[^\d]/g, '').slice(-4) || '7492'}`}
+                        </span>
+                      </div>
+                      <span className="text-[11px] text-[#2D5A43] font-medium">
+                        Show this pass code to estate security at the entrance gate
+                      </span>
+                    </div>
+                  )}
+
                   {/* Notes / Alternate proposal prompt */}
                   {item.notes && (
                     <div className="text-xs p-3 rounded-xl bg-[#F5EFEB] border border-[#E8DFC8] text-[#4B524D]">
@@ -368,8 +391,18 @@ export default function InspectionsPage() {
                         </button>
                       </div>
                     ) : (
-                      <div className="p-2.5 rounded-xl bg-[#EBF2ED] text-center text-xs font-bold text-[#2D5A43]">
-                        ✓ Slot Confirmed
+                      <div className="space-y-2">
+                        <div className="p-2 rounded-xl bg-[#EBF2ED] text-center text-xs font-bold text-[#2D5A43]">
+                          ✓ Slot Confirmed
+                        </div>
+                        <a
+                          href={`https://wa.me/${getCleanPhone(item.tenantPhone || item.tenant_phone)}?text=Hello%20${encodeURIComponent(item.tenantName || item.tenant_name || 'Tenant')},%20this%20is%20${encodeURIComponent(item.listerName || item.lister_name || 'Custodian')}%20from%20RentBridge.%20I%20have%20confirmed%20your%20viewing%20for%20${encodeURIComponent(item.propertyTitle || item.property_title)}%20on%20${encodeURIComponent(item.scheduledDate || item.scheduled_at)}.`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold text-center flex items-center justify-center gap-1.5 shadow-xs transition-all">
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>Chat on WhatsApp</span>
+                        </a>
                       </div>
                     )}
                   </div>
@@ -395,7 +428,7 @@ export default function InspectionsPage() {
 
                     <div className="flex items-center gap-2">
                       <a
-                        href={`https://wa.me/${item.listerWhatsapp || item.lister_whatsapp}?text=Hello%20${encodeURIComponent(item.listerName || item.lister_name)},%20I%20am%20calling%20regarding%20my%20confirmed%20free%20inspection%20for%20${encodeURIComponent(item.propertyTitle || item.property_title)}%20via%20RentBridge.`}
+                        href={`https://wa.me/${getCleanPhone(item.listerWhatsapp || item.listerPhone || item.lister_phone)}?text=Hello%20${encodeURIComponent(item.listerName || item.lister_name || 'Custodian')},%20I%20am%20calling%20regarding%20my%20confirmed%20free%20inspection%20for%20${encodeURIComponent(item.propertyTitle || item.property_title)}%20via%20RentBridge.`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 py-2 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold text-center flex items-center justify-center gap-1 shadow-xs">

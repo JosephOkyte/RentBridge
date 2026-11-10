@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createClient } from '../../../lib/supabase/server';
 import { createAdminClient } from '../../../lib/supabase/admin';
-import { sendPropertySubmittedEmail } from '../../../lib/resend/emails';
+import { notifyPropertySubmitted, notifyPropertyMarkedRented } from '../../../lib/notifications';
 import { PROPERTIES } from '../../../data/properties';
 
 /**
@@ -155,7 +155,7 @@ export async function POST(request) {
 
     // If submitted for verification, trigger Resend confirmation email to lister
     if (status === 'pending_audit' && user.primaryEmailAddress?.emailAddress) {
-      await sendPropertySubmittedEmail({
+      await notifyPropertySubmitted({
         listerEmail: user.primaryEmailAddress.emailAddress,
         listerName: newProperty.lister_name,
         propertyTitle: title,
@@ -187,7 +187,7 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { propertyId, status } = body;
+    const { propertyId, propertyTitle, status } = body;
 
     const adminClient = createAdminClient();
     const { error } = await adminClient
@@ -197,6 +197,14 @@ export async function PATCH(request) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    if (status === 'rented' && user.primaryEmailAddress?.emailAddress) {
+      await notifyPropertyMarkedRented({
+        listerEmail: user.primaryEmailAddress.emailAddress,
+        listerName: user.fullName || 'Property Custodian',
+        propertyTitle: propertyTitle || 'Your Property',
+      });
     }
 
     return NextResponse.json({

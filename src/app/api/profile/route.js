@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { createAdminClient } from '../../../lib/supabase/admin';
+import { notifyWelcome } from '../../../lib/notifications';
 
 /**
  * GET /api/profile
@@ -186,6 +187,14 @@ export async function POST(request) {
     if (insertError) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
+
+    // Trigger Welcome Pack via Email + WhatsApp
+    await notifyWelcome({
+      email,
+      phone: newProfile.phone || newProfile.whatsapp,
+      name: fullName,
+      role,
+    });
 
     return NextResponse.json({ success: true, profile: inserted });
   } catch (err) {
