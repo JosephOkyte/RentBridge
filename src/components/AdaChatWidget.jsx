@@ -23,7 +23,7 @@ const INITIAL_MESSAGES = [
   {
     id: 'msg-welcome',
     role: 'ada',
-    content: `Hello! I'm **Ada from RentBridge** — your personal housing concierge and anti-agent shield in Nigeria.\n\nWhether you need a flood-free apartment in **Lekki**, a commercial suite in **Wuse 2**, an executive duplex in **Port Harcourt (GRA)**, or a mansion in **Enugu**, I'm here to guide you directly with **₦0 viewing fees** and zero middleman drama.\n\nHow can I help you today?`,
+    content: "Hello! I'm Ada from RentBridge... Your personal housing concierge and anti-agent shield..\n\nHow can I help you today?",
     properties: [],
   },
 ];

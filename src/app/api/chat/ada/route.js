@@ -188,7 +188,7 @@ export async function POST(request) {
       replyText = `**Title Verification & Legal Custody Protocol:**\n\nRentBridge works closely with retained legal counsel and estate administrators. For legal custodians, we verify:\n\n* Certified True Copy (CTC) of Certificate of Occupancy or Registered Deed of Assignment\n* Registered Power of Attorney or Letters of Administration\n* Supreme Court Enrollment Number (SCN) or NBA Practicing Bar Seal\n\nThis guarantees prospective tenants that title custody is clean, litigation-free, and directly authorized.`;
     } else {
       matchedProps = inventory.slice(0, 2);
-      replyText = `Hello! I'm **Ada from RentBridge** — your personal real estate concierge and anti-agent guide.\n\nWhether you are a **Tenant** looking for a clean, flood-free home with ₦0 viewing fees, or a **Landlord / Caretaker / Lawyer** looking to list directly without roadside agent inflation, I dey here for you!\n\nAsk me anything about:\n* Neighborhood rental costs (Lagos, Abuja, PH, Enugu)\n* Finding flood-free houses with 24/7 power\n* How our official compound Gate Pass works\n* Phase 1 title & photo verification\n\nHow can I help you today?`;
+      replyText = "Hello! I'm Ada from RentBridge... Your personal housing concierge and anti-agent shield..\n\nHow can I help you today?";
     }
 
     return NextResponse.json({
