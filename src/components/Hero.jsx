@@ -309,8 +309,8 @@ export default function Hero({
             <span className="text-[11px] sm:text-xs font-bold text-white truncate">100% Verified Titles</span>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-full border border-white/15 text-left">
-            <Sparkles className="w-3.5 h-3.5 text-[#8AE0B3] shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold text-white truncate">Annual Direct Rent</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-[#8AE0B3] shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold text-white truncate">Instant WhatsApp Gate Pass</span>
           </div>
         </div>
 

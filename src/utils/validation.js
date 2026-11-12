@@ -130,3 +130,4 @@ export function validatePhotoQuota(uploadedCount, category = 'residential') {
       : `Verification requires at least ${required} photos (${remaining} more needed) covering street road, compound gate, and interior.`
   };
 }
+

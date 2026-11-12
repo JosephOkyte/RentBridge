@@ -114,9 +114,9 @@ export default function VerificationGuide() {
             <div className="w-12 h-12 rounded-xl bg-[#2D5A43]/10 text-[#2D5A43] flex items-center justify-center mb-4">
               <Building2 className="w-6 h-6" />
             </div>
-            <h3 className="text-lg font-bold text-[#151816] mb-2">4. Multi-State Jurisdiction</h3>
+            <h3 className="text-lg font-bold text-[#151816] mb-2">4. 48-Hour Legal Audit SLA</h3>
             <p className="text-sm text-[#4B524D] leading-relaxed">
-              Custom-tailored verification guidelines for properties in <strong className="text-[#151816]">Lagos, Abuja, Port Harcourt,</strong> and <strong className="text-[#151816]">Enugu</strong>.
+              Every listing is individually vetted by human compliance officers across <strong className="text-[#151816]">Lagos, Abuja, Port Harcourt,</strong> and <strong className="text-[#151816]">Enugu</strong> before going live. Zero bot approvals.
             </p>
           </div>
 
