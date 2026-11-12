@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
@@ -12,6 +13,7 @@ import PropertyDetailModal from '../components/PropertyDetailModal';
 import InspectionModal from '../components/InspectionModal';
 import ListPropertyModal from '../components/ListPropertyModal';
 import Footer from '../components/Footer';
+import { PROPERTIES } from '../data/properties';
 
 // Dynamic import with ssr: false for Leaflet Map to eliminate server-side window errors
 const MapExplorer = dynamic(() => import('../components/MapExplorer'), {
@@ -25,7 +27,8 @@ const MapExplorer = dynamic(() => import('../components/MapExplorer'), {
   ),
 });
 
-export default function HomePage() {
+function HomeContent() {
+  const searchParams = useSearchParams();
   const [selectedCity, setSelectedCity] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   
@@ -41,6 +44,18 @@ export default function HomePage() {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Handle URL highlight query param (e.g. from Dashboard "View Live Page")
+  useEffect(() => {
+    const highlightId = searchParams?.get('highlight');
+    if (highlightId) {
+      const match = PROPERTIES.find((p) => String(p.id) === String(highlightId));
+      if (match) {
+        setActivePropertyModal(match);
+        handleNavigateToSection('properties');
+      }
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#151816]">
@@ -95,6 +110,10 @@ export default function HomePage() {
       {/* Footer */}
       <Footer
         onNavigateToSection={handleNavigateToSection}
+        onSelectCategory={(category) => {
+          setSelectedCategory(category);
+          handleNavigateToSection('properties');
+        }}
         onOpenListModal={() => setIsListModalOpen(true)}
       />
 
@@ -124,6 +143,18 @@ export default function HomePage() {
         />
       )}
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FBF9F5] flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-[#2D5A43] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
 

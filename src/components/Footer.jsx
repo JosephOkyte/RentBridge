@@ -3,7 +3,7 @@
 import React from 'react';
 import { ShieldCheck, MapPin, Phone, Mail, ArrowUp } from 'lucide-react';
 
-export default function Footer({ onNavigateToSection, onOpenListModal }) {
+export default function Footer({ onNavigateToSection, onOpenListModal, onSelectCategory }) {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -67,38 +67,38 @@ export default function Footer({ onNavigateToSection, onOpenListModal }) {
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#8F8372]">Direct Property Links</h4>
             <div className="grid grid-cols-2 gap-2 text-xs text-[#E2D7C8]">
               <button 
-                onClick={() => onNavigateToSection('properties')} 
-                className="text-left hover:text-white transition-colors">
+                onClick={() => onSelectCategory ? onSelectCategory('residential') : onNavigateToSection('properties')} 
+                className="text-left hover:text-white transition-colors cursor-pointer">
                 • Residential Flats
               </button>
               <button 
-                onClick={() => onNavigateToSection('properties')} 
-                className="text-left hover:text-white transition-colors">
+                onClick={() => onSelectCategory ? onSelectCategory('commercial') : onNavigateToSection('properties')} 
+                className="text-left hover:text-white transition-colors cursor-pointer">
                 • Commercial Shops
               </button>
               <button 
-                onClick={() => onNavigateToSection('properties')} 
-                className="text-left hover:text-white transition-colors">
+                onClick={() => onSelectCategory ? onSelectCategory('industrial') : onNavigateToSection('properties')} 
+                className="text-left hover:text-white transition-colors cursor-pointer">
                 • Logistics Warehouses
               </button>
               <button 
                 onClick={() => onNavigateToSection('map-explorer')} 
-                className="text-left hover:text-white transition-colors">
+                className="text-left hover:text-white transition-colors cursor-pointer">
                 • Google Map Exploration
               </button>
               <button 
                 onClick={() => onNavigateToSection('verification-process')} 
-                className="text-left hover:text-white transition-colors">
+                className="text-left hover:text-white transition-colors cursor-pointer">
                 • Anti-Fraud Framework
               </button>
               <button 
                 onClick={() => onNavigateToSection('savings-calculator')} 
-                className="text-left hover:text-white transition-colors">
+                className="text-left hover:text-white transition-colors cursor-pointer">
                 • Agent Fee Calculator
               </button>
               <button 
                 onClick={() => onNavigateToSection('about')} 
-                className="text-left hover:text-white transition-colors text-[#8AE0B3] font-semibold">
+                className="text-left hover:text-white transition-colors text-[#8AE0B3] font-semibold cursor-pointer">
                 • About RentBridge & Mission
               </button>
             </div>
@@ -106,7 +106,7 @@ export default function Footer({ onNavigateToSection, onOpenListModal }) {
             <div className="pt-3">
               <button
                 onClick={onOpenListModal}
-                className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold transition-all shadow-md">
+                className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold transition-all shadow-md cursor-pointer">
                 List Vacancy (Landlord / Lawyer Portal)
               </button>
             </div>
