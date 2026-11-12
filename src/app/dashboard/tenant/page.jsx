@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import ProfilePhotoModal from '../../../components/ProfilePhotoModal';
 import { formatNaira } from '../../../utils/formatters';
+import EmptyState from '../../../components/EmptyState';
 
 export default function TenantDashboardPage() {
   const router = useRouter();
@@ -208,22 +209,18 @@ export default function TenantDashboardPage() {
         </div>
 
         {inspections.length === 0 ? (
-          <div className="p-12 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#F5EFEB] text-[#8F8372] flex items-center justify-center mx-auto">
-              <Calendar className="w-6 h-6" />
-            </div>
-            <p className="text-sm font-bold text-[#151816]">No inspections scheduled yet</p>
-            <p className="text-xs text-[#8F8372] max-w-sm mx-auto">
-              Browse verified vacancies across Lagos, Abuja, Port Harcourt, and Enugu to book your first free viewing.
-            </p>
-            <div className="pt-2">
-              <Link
-                href="/#properties"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold hover:bg-[#1E3F2F] transition-all">
-                <Search className="w-4 h-4" />
-                <span>Explore Available Properties</span>
-              </Link>
-            </div>
+          <div className="p-6">
+            <EmptyState
+              icon={Calendar}
+              badge="Tenant Viewing Sanctuary"
+              title="No property inspections booked yet"
+              description="Explore verified residential, commercial, or luxury properties across Lagos, Abuja, Port Harcourt, and Enugu. Every viewing is 100% free with ₦0 agent fees."
+              primaryAction={{
+                label: 'Browse Verified Direct Vacancies →',
+                href: '/#properties',
+              }}
+              tip="Certified ₦0 viewing fees with instant WhatsApp gate pass access."
+            />
           </div>
         ) : (
           <div className="divide-y divide-[#E8DFC8]">

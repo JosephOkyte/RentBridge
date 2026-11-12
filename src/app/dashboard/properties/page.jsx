@@ -21,6 +21,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { formatNaira } from '../../../utils/formatters';
+import EmptyState from '../../../components/EmptyState';
 
 export default function MyPropertiesPage() {
   const [profile, setProfile] = useState(null);
@@ -211,8 +212,25 @@ export default function MyPropertiesPage() {
         </button>
       </div>
 
-      {/* Property Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Property Cards Grid or Empty State */}
+      {filtered.length === 0 ? (
+        <EmptyState
+          icon={Building2}
+          badge={activeTab === 'drafts' ? 'Drafts Vault Clean' : 'Listing Inventory'}
+          title={activeTab === 'drafts' ? 'No staged drafts pending' : 'No properties found in this view'}
+          description={
+            activeTab === 'drafts'
+              ? 'You have zero incomplete draft listings. When you stage a property and save as draft, you have 30 days to finish uploading your access road, gate, and interior photos.'
+              : 'You have not listed any properties under this filter yet. Stage your residential or commercial vacancy to connect directly with tenants.'
+          }
+          primaryAction={{
+            label: 'Stage New Listing +',
+            href: '/dashboard/properties/new',
+          }}
+          tip="Zero agent fee deductions. 100% direct rental income retained."
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filtered.map((property) => {
           const daysLeft = calculateDaysLeft(property.createdAt || property.created_at);
 
@@ -339,6 +357,7 @@ export default function MyPropertiesPage() {
           );
         })}
       </div>
+      )}
     </div>
   );
 }

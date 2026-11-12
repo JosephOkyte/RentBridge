@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import ProfilePhotoModal from '../../../components/ProfilePhotoModal';
 import { formatNaira } from '../../../utils/formatters';
+import EmptyState from '../../../components/EmptyState';
 
 export default function LandlordDashboardPage() {
   const router = useRouter();
@@ -238,14 +239,18 @@ export default function LandlordDashboardPage() {
         </div>
 
         {inspections.length === 0 ? (
-          <div className="p-12 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#F5EFEB] text-[#8F8372] flex items-center justify-center mx-auto">
-              <Calendar className="w-6 h-6" />
-            </div>
-            <p className="text-sm font-bold text-[#151816]">No inspections scheduled yet</p>
-            <p className="text-xs text-[#8F8372] max-w-sm mx-auto">
-              When prospective tenants request a viewing on your active properties, their slot requests will appear here.
-            </p>
+          <div className="p-6">
+            <EmptyState
+              icon={Calendar}
+              badge="Custodian Dispatch Ready"
+              title="No inspection appointments booked yet today"
+              description="Your verified listings are live across the RentBridge network. When prospective tenants schedule physical viewing slots, their requests and contact logs will appear here for confirmation."
+              primaryAction={{
+                label: "Share Your Public Listing Link →",
+                href: "/#properties",
+              }}
+              tip="100% direct landlord-to-tenant coordination. Zero roadside agent cut deducted."
+            />
           </div>
         ) : (
           <div className="divide-y divide-[#E8DFC8]">

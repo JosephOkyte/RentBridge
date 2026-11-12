@@ -273,6 +273,28 @@ export async function PATCH(request) {
       });
     }
 
+    // 3.5. Admin / Staff direct status update
+    if (action === 'admin_update_status' || nextStatus) {
+      const targetStatus = nextStatus || body.newStatus || 'confirmed';
+      try {
+        const adminClient = createAdminClient();
+        await adminClient
+          .from('inspections')
+          .update({
+            status: targetStatus,
+            notes: body.notes || `Status set to ${targetStatus} by operations staff.`
+          })
+          .eq('id', inspectionId);
+      } catch (dbErr) {
+        console.warn('[Supabase DB notice]:', dbErr.message);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Inspection status updated to ${targetStatus}.`,
+      });
+    }
+
     // 4. Extortion report
     if (action === 'report_extortion') {
       // 🚨 Red Alert: A tenant reported an inspection fee demand!

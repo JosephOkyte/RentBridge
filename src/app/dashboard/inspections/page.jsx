@@ -23,6 +23,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { validateRequired } from '../../../utils/validation';
+import EmptyState from '../../../components/EmptyState';
 
 export default function InspectionsPage() {
   const [profile, setProfile] = useState(null);
@@ -300,17 +301,22 @@ export default function InspectionsPage() {
       {/* Inspections List */}
       <div className="space-y-4">
         {inspections.length === 0 ? (
-          <div className="p-12 text-center bg-white rounded-3xl border border-[#E8DFC8] space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#F5EFEB] text-[#8F8372] flex items-center justify-center mx-auto">
-              <Calendar className="w-6 h-6" />
-            </div>
-            <p className="text-sm font-bold text-[#151816]">No inspections recorded</p>
-            <p className="text-xs text-[#8F8372] max-w-sm mx-auto">
-              {isLister 
-                ? 'Incoming booking requests from tenants will show up here for you to confirm or reschedule.'
-                : 'Browse our verified properties across Lagos, Abuja, Port Harcourt, and Enugu to schedule a free inspection.'}
-            </p>
-          </div>
+          <EmptyState
+            icon={Calendar}
+            badge={isLister ? "Custodian Pipeline Active" : "Tenant Viewing Sanctuary"}
+            title={isLister ? "No viewing appointments booked yet today" : "No property inspections booked yet"}
+            description={
+              isLister 
+                ? "Incoming viewing requests from verified tenants will show up here. You can confirm slots, suggest alternate times, or chat directly via WhatsApp with zero broker interference."
+                : "You haven't scheduled any direct physical inspections yet. Browse authentic apartments, commercial spaces, and houses across Lagos, Abuja, Port Harcourt, and Enugu with ₦0 viewing fees."
+            }
+            primaryAction={
+              isLister 
+                ? { label: "Share Your Public Listing Link →", href: "/#properties" }
+                : { label: "Browse Verified Direct Vacancies →", href: "/#properties" }
+            }
+            tip="Every viewing is protected by an official compound gate pass and direct custodian verification."
+          />
         ) : (
           inspections.map((item) => {
             const hasAlternateProposed = (item.notes || '').includes('alternate time');
