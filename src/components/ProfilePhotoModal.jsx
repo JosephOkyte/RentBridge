@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Camera, Upload, Check, AlertCircle, ShieldCheck, X, User } from 'lucide-react';
+import { Camera, Upload, Check, AlertCircle, ShieldCheck, X, User, Loader2 } from 'lucide-react';
 
 export default function ProfilePhotoModal({ isOpen, onClose, onPhotoUpdated }) {
   const { user } = useUser();
@@ -35,7 +35,7 @@ export default function ProfilePhotoModal({ isOpen, onClose, onPhotoUpdated }) {
   };
 
   const handleUpload = async () => {
-    if (!selectedFile || !user) return;
+    if (uploading || !selectedFile || !user) return;
     setUploading(true);
     setErrorMsg('');
     setSuccessMsg('');
@@ -49,11 +49,16 @@ export default function ProfilePhotoModal({ isOpen, onClose, onPhotoUpdated }) {
       const updatedUrl = user.imageUrl;
 
       // 2. Persist to Supabase profiles table
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatar_url: updatedUrl }),
       });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update avatar in database.');
+      }
 
       setSuccessMsg('Your personal portrait was uploaded successfully!');
       if (onPhotoUpdated) onPhotoUpdated(updatedUrl);
@@ -62,8 +67,8 @@ export default function ProfilePhotoModal({ isOpen, onClose, onPhotoUpdated }) {
         onClose();
       }, 1500);
     } catch (err) {
-      console.error('Photo upload error:', err);
-      setErrorMsg(err.message || 'Failed to upload photo. Please try again.');
+      console.error('[RentBridge Photo Upload Error]:', err);
+      setErrorMsg(err.message || 'Failed to upload photo. Please check your connection and try again.');
     } finally {
       setUploading(false);
     }
@@ -173,7 +178,14 @@ export default function ProfilePhotoModal({ isOpen, onClose, onPhotoUpdated }) {
                 ? 'bg-[#E8DFC8] text-[#8F8372] cursor-not-allowed'
                 : 'bg-[#2D5A43] hover:bg-[#1E3F2F] text-white'
             }`}>
-            <span>{uploading ? 'Saving Photo...' : 'Save & Verify'}</span>
+            {uploading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                <span>Transmitting to Database...</span>
+              </>
+            ) : (
+              <span>Save & Verify</span>
+            )}
           </button>
         </div>
       </div>

@@ -18,8 +18,11 @@ import {
   CalendarClock,
   User,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
+import { validateRequired } from '../../../utils/validation';
 
 export default function InspectionsPage() {
   const [profile, setProfile] = useState(null);
@@ -31,6 +34,8 @@ export default function InspectionsPage() {
   const [selectedInspection, setSelectedInspection] = useState(null);
   const [complaintText, setComplaintText] = useState('');
   const [reportSent, setReportSent] = useState(false);
+  const [processingReport, setProcessingReport] = useState(false);
+  const [reportError, setReportError] = useState('');
 
   // Suggest Alternate Time Modal (For Lister)
   const [alternateModalOpen, setAlternateModalOpen] = useState(false);
@@ -39,6 +44,7 @@ export default function InspectionsPage() {
   const [alternateNotes, setAlternateNotes] = useState('');
   const [processingAction, setProcessingAction] = useState(false);
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
+  const [actionErrorMsg, setActionErrorMsg] = useState('');
 
   const loadData = async () => {
     try {
@@ -79,8 +85,11 @@ export default function InspectionsPage() {
 
   // Lister: Confirm Slot
   const handleConfirmSlot = async (item) => {
+    if (processingAction) return;
     setProcessingAction(true);
     setActionSuccessMsg('');
+    setActionErrorMsg('');
+
     try {
       const res = await fetch('/api/inspections', {
         method: 'PATCH',
@@ -91,12 +100,14 @@ export default function InspectionsPage() {
         }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setActionSuccessMsg(data.message || 'Viewing slot confirmed!');
-        loadData();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to confirm viewing slot in database.');
       }
+      setActionSuccessMsg(data.message || 'Viewing slot confirmed successfully!');
+      loadData();
     } catch (err) {
-      console.error(err);
+      console.error('[RentBridge Confirm Slot Error]:', err);
+      setActionErrorMsg(err.message || 'Network error occurred while confirming slot.');
     } finally {
       setProcessingAction(false);
     }
@@ -108,13 +119,23 @@ export default function InspectionsPage() {
     setAlternateDate(item.scheduledDate || item.scheduled_at || '');
     setAlternateTimeSlot(item.timeSlot || item.time_slot || '11:00 AM');
     setAlternateNotes('');
+    setActionErrorMsg('');
     setAlternateModalOpen(true);
   };
 
   // Lister: Submit Alternate Time
   const handleSubmitAlternate = async (e) => {
     e.preventDefault();
+    if (processingAction) return;
+
+    if (!alternateDate) {
+      setActionErrorMsg('Please select a proposed alternative date.');
+      return;
+    }
+
     setProcessingAction(true);
+    setActionErrorMsg('');
+
     try {
       const res = await fetch('/api/inspections', {
         method: 'PATCH',
@@ -124,17 +145,19 @@ export default function InspectionsPage() {
           action: 'suggest_alternate',
           alternateDate,
           alternateTimeSlot,
-          reportNotes: alternateNotes,
+          reportNotes: alternateNotes?.trim() || '',
         }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setActionSuccessMsg(data.message || 'Alternate time proposed!');
-        setAlternateModalOpen(false);
-        loadData();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit alternate proposal.');
       }
+      setActionSuccessMsg(data.message || 'Alternate time proposal sent to tenant!');
+      setAlternateModalOpen(false);
+      loadData();
     } catch (err) {
-      console.error(err);
+      console.error('[RentBridge Alternate Submit Error]:', err);
+      setActionErrorMsg(err.message || 'Network error transmitting proposal.');
     } finally {
       setProcessingAction(false);
     }
@@ -142,7 +165,11 @@ export default function InspectionsPage() {
 
   // Tenant: Accept Alternate Time
   const handleAcceptAlternate = async (item) => {
+    if (processingAction) return;
     setProcessingAction(true);
+    setActionSuccessMsg('');
+    setActionErrorMsg('');
+
     try {
       const res = await fetch('/api/inspections', {
         method: 'PATCH',
@@ -153,12 +180,14 @@ export default function InspectionsPage() {
         }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setActionSuccessMsg(data.message || 'Alternate time accepted!');
-        loadData();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to accept alternate time.');
       }
+      setActionSuccessMsg(data.message || 'Alternate viewing time confirmed!');
+      loadData();
     } catch (err) {
-      console.error(err);
+      console.error('[RentBridge Accept Alternate Error]:', err);
+      setActionErrorMsg(err.message || 'Network error accepting slot.');
     } finally {
       setProcessingAction(false);
     }
@@ -169,14 +198,26 @@ export default function InspectionsPage() {
     setSelectedInspection(item);
     setComplaintText('');
     setReportSent(false);
+    setReportError('');
     setReportModalOpen(true);
   };
 
   // Tenant: Submit Report
   const handleSubmitReport = async (e) => {
     e.preventDefault();
+    if (processingReport) return;
+
+    const descCheck = validateRequired(complaintText, 'Complaint description', 8);
+    if (!descCheck.valid) {
+      setReportError(descCheck.error);
+      return;
+    }
+
+    setProcessingReport(true);
+    setReportError('');
+
     try {
-      await fetch('/api/inspections', {
+      const res = await fetch('/api/inspections', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -184,12 +225,19 @@ export default function InspectionsPage() {
           inspectionId: selectedInspection.id,
           propertyTitle: selectedInspection.propertyTitle || selectedInspection.property_title,
           listerName: selectedInspection.listerName || selectedInspection.lister_name,
-          reportNotes: complaintText,
+          reportNotes: complaintText.trim(),
         }),
       });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to transmit extortion report.');
+      }
       setReportSent(true);
     } catch (err) {
-      console.error(err);
+      console.error('[RentBridge Extortion Report Error]:', err);
+      setReportError(err.message || 'A network error occurred while submitting your report. Please try again.');
+    } finally {
+      setProcessingReport(false);
     }
   };
 
@@ -511,11 +559,25 @@ export default function InspectionsPage() {
                 />
               </div>
 
+              {actionErrorMsg && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                  <span>{actionErrorMsg}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={processingAction}
-                className="w-full py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-md cursor-pointer transition-all">
-                Send Alternate Proposal to Tenant
+                className="w-full py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:bg-[#8F8372] disabled:cursor-not-allowed text-white text-xs font-bold shadow-md cursor-pointer transition-all flex items-center justify-center gap-2">
+                {processingAction ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                    <span>Transmitting Proposal to Tenant...</span>
+                  </>
+                ) : (
+                  <span>Send Alternate Proposal to Tenant</span>
+                )}
               </button>
             </form>
           </div>
@@ -537,7 +599,7 @@ export default function InspectionsPage() {
                 </p>
                 <button
                   onClick={() => setReportModalOpen(false)}
-                  className="w-full py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold">
+                  className="w-full py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold cursor-pointer">
                   Close & Return
                 </button>
               </div>
@@ -551,7 +613,7 @@ export default function InspectionsPage() {
                   <button
                     type="button"
                     onClick={() => setReportModalOpen(false)}
-                    className="text-xs text-[#8F8372] hover:text-[#151816]">
+                    className="text-xs text-[#8F8372] hover:text-[#151816] cursor-pointer">
                     Cancel
                   </button>
                 </div>
@@ -574,10 +636,25 @@ export default function InspectionsPage() {
                   />
                 </div>
 
+                {reportError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                    <span>{reportError}</span>
+                  </div>
+                )}
+
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl bg-[#B91C1C] hover:bg-[#991B1B] text-white text-xs font-bold shadow-md cursor-pointer">
-                  Submit Immediate Anti-Fraud Report
+                  disabled={processingReport}
+                  className="w-full py-3.5 rounded-xl bg-[#B91C1C] hover:bg-[#991B1B] disabled:bg-[#8F8372] disabled:cursor-not-allowed text-white text-xs font-bold shadow-md cursor-pointer transition-all flex items-center justify-center gap-2">
+                  {processingReport ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Transmitting to Anti-Fraud Citadel...</span>
+                    </>
+                  ) : (
+                    <span>Submit Immediate Anti-Fraud Report</span>
+                  )}
                 </button>
               </form>
             )}

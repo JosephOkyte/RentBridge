@@ -17,10 +17,12 @@ import {
   BookmarkCheck,
   Scale,
   KeyRound,
-  FileText
+  FileText,
+  Loader2
 } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../../../../data/properties';
 import { IMAGES } from '../../../../utils/images';
+import { validateRequired, validatePositiveAmount, validatePhotoQuota } from '../../../../utils/validation';
 
 export default function NewPropertyWizardPage() {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function NewPropertyWizardPage() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [listerRole, setListerRole] = useState('landlord');
   const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState(null); // 'draft' | 'pending_audit' | null
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -135,47 +138,86 @@ export default function NewPropertyWizardPage() {
 
   // Submit action (either as 'draft' or 'pending_audit')
   const handleAction = async (statusTarget) => {
+    // 1. Double-Submission Lock Guard
+    if (loading) return;
     setErrorMessage('');
     setSuccessMessage('');
 
-    if (statusTarget === 'pending_audit' && !hasMetQuota) {
-      setErrorMessage(
-        `Verification requires at least ${minRequiredPhotos} photos (${photosRemaining} more needed) covering the street road, gate, and interior. You can click "Save as Draft" to finish later.`
-      );
+    // 2. Client-Side Input Validation (Before Network Request)
+    const titleCheck = validateRequired(formData.title, 'Property Title', 4);
+    if (!titleCheck.valid) {
+      setErrorMessage(titleCheck.error);
       return;
     }
 
-    if (!formData.title || !formData.address || !formData.annualRent) {
-      setErrorMessage('Please fill in the required property title, address, and annual rent.');
+    const addressCheck = validateRequired(formData.address, 'Street Address & Location', 4);
+    if (!addressCheck.valid) {
+      setErrorMessage(addressCheck.error);
       return;
     }
 
+    const rentCheck = validatePositiveAmount(formData.annualRent, 'Annual Rent', 50000);
+    if (!rentCheck.valid) {
+      setErrorMessage(rentCheck.error);
+      return;
+    }
+
+    if (statusTarget === 'pending_audit') {
+      const photoCheck = validatePhotoQuota(uploadedPhotos.length, formData.category);
+      if (!photoCheck.valid) {
+        setErrorMessage(
+          `${photoCheck.error} You can click "Save as Draft" to finish uploading later.`
+        );
+        return;
+      }
+
+      const idCheck = validateRequired(formData.idNumber, 'Verification Document Reference / Landlord Phone', 3);
+      if (!idCheck.valid) {
+        setErrorMessage(idCheck.error);
+        return;
+      }
+    }
+
+    // 3. Double-Submission Lock Activation
     setLoading(true);
+    setActiveAction(statusTarget);
 
+    // 4. Try/Catch Error Resilience
     try {
       const res = await fetch('/api/properties', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          title: formData.title.trim(),
+          address: formData.address.trim(),
+          neighborhood: formData.neighborhood.trim(),
+          annualRent: Number(formData.annualRent),
+          cautionDeposit: Number(formData.cautionDeposit || 0),
+          serviceCharge: Number(formData.serviceCharge || 0),
+          idNumber: formData.idNumber.trim(),
           status: statusTarget,
           photos: uploadedPhotos,
+          listerRole,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to save property');
+        throw new Error(data.error || 'Failed to save property to RentBridge database.');
       }
 
-      setSuccessMessage(data.message);
+      // 5. Success Confirmation Flow
+      setSuccessMessage(data.message || (statusTarget === 'draft' ? 'Listing saved as draft successfully!' : 'Property submitted for Phase 1 verification!'));
       setTimeout(() => {
         router.push('/dashboard/properties');
-      }, 2000);
+      }, 1500);
     } catch (err) {
-      setErrorMessage(err.message);
+      console.error('[RentBridge Property Save Error]:', err);
+      setErrorMessage(err.message || 'A network error occurred while communicating with the database. Please try again.');
     } finally {
       setLoading(false);
+      setActiveAction(null);
     }
   };
 
@@ -527,9 +569,18 @@ export default function NewPropertyWizardPage() {
               type="button"
               disabled={loading}
               onClick={() => handleAction('draft')}
-              className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] text-xs sm:text-sm font-bold border border-[#D7CBBB] transition-all cursor-pointer flex items-center justify-center gap-2">
-              <BookmarkCheck className="w-4 h-4" />
-              <span>Save as Draft (30-Day Timer)</span>
+              className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] disabled:opacity-50 disabled:cursor-not-allowed text-[#1E3F2F] text-xs sm:text-sm font-bold border border-[#D7CBBB] transition-all cursor-pointer flex items-center justify-center gap-2">
+              {loading && activeAction === 'draft' ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#2D5A43]" />
+                  <span>Saving Draft to Database...</span>
+                </>
+              ) : (
+                <>
+                  <BookmarkCheck className="w-4 h-4" />
+                  <span>Save as Draft (30-Day Timer)</span>
+                </>
+              )}
             </button>
 
             <button
@@ -537,12 +588,23 @@ export default function NewPropertyWizardPage() {
               disabled={loading}
               onClick={() => handleAction('pending_audit')}
               className={`w-full sm:w-2/3 py-3.5 rounded-xl text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 ${
-                hasMetQuota
+                loading
+                  ? 'bg-[#8F8372] cursor-not-allowed'
+                  : hasMetQuota
                   ? 'bg-[#2D5A43] hover:bg-[#1E3F2F]'
                   : 'bg-[#2D5A43]/70 hover:bg-[#2D5A43]'
               }`}>
-              <ShieldCheck className="w-4 h-4" />
-              <span>Submit for Phase 1 Verification ({uploadedPhotos.length}/{minRequiredPhotos} Photos)</span>
+              {loading && activeAction === 'pending_audit' ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                  <span>Transmitting to Database...</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Submit for Phase 1 Verification ({uploadedPhotos.length}/{minRequiredPhotos} Photos)</span>
+                </>
+              )}
             </button>
           </div>
           <p className="text-[11px] text-[#8F8372] text-center">

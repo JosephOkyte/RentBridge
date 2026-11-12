@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { X, ShieldCheck, Upload, Building, UserCheck, Scale, KeyRound, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2, Camera, Compass, BookmarkCheck } from 'lucide-react';
+import { X, ShieldCheck, Upload, Building, UserCheck, Scale, KeyRound, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2, Camera, Compass, BookmarkCheck, Loader2 } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../data/properties';
 import { IMAGES } from '../utils/images';
+import { validateNigerianPhone, validateEmail, validateRequired, validatePositiveAmount, validatePhotoQuota } from '../utils/validation';
 
 export default function ListPropertyModal({ isOpen, onClose }) {
   const { user } = useUser();
@@ -12,6 +13,8 @@ export default function ListPropertyModal({ isOpen, onClose }) {
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -40,11 +43,6 @@ export default function ListPropertyModal({ isOpen, onClose }) {
     }
   }, [user]);
 
-  const handleSaveDraft = (e) => {
-    e.preventDefault();
-    setDraftSaved(true);
-  };
-
   // Photo uploads state
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
 
@@ -55,6 +53,49 @@ export default function ListPropertyModal({ isOpen, onClose }) {
   const minRequiredPhotos = isResidential ? 12 : 17;
   const photosRemaining = Math.max(0, minRequiredPhotos - uploadedPhotos.length);
   const hasMetPhotoRequirement = uploadedPhotos.length >= minRequiredPhotos;
+
+  const handleSaveDraft = async (e) => {
+    e.preventDefault();
+    if (loading || draftLoading) return;
+    setUploadError('');
+
+    setDraftLoading(true);
+    try {
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `${formData.propertyKind} in ${formData.neighborhood || formData.city}`,
+          propertyKind: formData.propertyKind,
+          category: formData.type,
+          city: formData.city,
+          neighborhood: formData.neighborhood?.trim() || '',
+          annualRent: formData.priceYearly ? Number(formData.priceYearly) : 0,
+          cautionDeposit: formData.cautionDeposit ? Number(formData.cautionDeposit) : 0,
+          idDocumentType: formData.idDocumentType,
+          idNumber: formData.idNumber?.trim() || '',
+          status: 'draft',
+          photos: uploadedPhotos,
+          listerRole,
+          listerName: formData.fullName?.trim() || user?.fullName || 'Property Custodian',
+          listerPhone: formData.phone?.trim() || '',
+          listerEmail: formData.email?.trim() || user?.primaryEmailAddress?.emailAddress || '',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save draft to RentBridge database');
+      }
+
+      setDraftSaved(true);
+    } catch (err) {
+      console.error('[RentBridge Save Draft Error]:', err);
+      setUploadError(err.message || 'A network error occurred while saving your draft. Please try again.');
+    } finally {
+      setDraftLoading(false);
+    }
+  };
 
   // Handle file uploads
   const handlePhotoUpload = (e) => {
@@ -124,18 +165,99 @@ export default function ListPropertyModal({ isOpen, onClose }) {
     setUploadError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!hasMetPhotoRequirement) {
-      setUploadError(
-        `Please attach at least ${minRequiredPhotos} photos (${photosRemaining} more needed) including the street where the house is located, full street length, and entrances before submitting.`
-      );
-      // scroll to photo section
+
+    // 1. Double-Submission Lock Guard
+    if (loading || draftLoading) return;
+    setUploadError('');
+
+    // 2. Client-Side Input Validation (Before Network Request)
+    const nameCheck = validateRequired(formData.fullName, 'Full Name', 2);
+    if (!nameCheck.valid) {
+      setUploadError(nameCheck.error);
+      return;
+    }
+
+    const phoneCheck = validateNigerianPhone(formData.phone);
+    if (!phoneCheck.valid) {
+      setUploadError(phoneCheck.error);
+      return;
+    }
+
+    const emailCheck = validateEmail(formData.email);
+    if (!emailCheck.valid) {
+      setUploadError(emailCheck.error);
+      return;
+    }
+
+    const areaCheck = validateRequired(formData.neighborhood, 'Neighborhood / Estate Area', 2);
+    if (!areaCheck.valid) {
+      setUploadError(areaCheck.error);
+      return;
+    }
+
+    const rentCheck = validatePositiveAmount(formData.priceYearly, 'Annual Rent', 50000);
+    if (!rentCheck.valid) {
+      setUploadError(rentCheck.error);
+      return;
+    }
+
+    const photoCheck = validatePhotoQuota(uploadedPhotos.length, formData.type);
+    if (!photoCheck.valid) {
+      setUploadError(photoCheck.error);
       const photoEl = document.getElementById('photo-upload-section');
       if (photoEl) photoEl.scrollIntoView({ behavior: 'smooth' });
       return;
     }
-    setSubmitted(true);
+
+    const idCheck = validateRequired(formData.idNumber, 'Verification Document Reference / Contact Phone', 3);
+    if (!idCheck.valid) {
+      setUploadError(idCheck.error);
+      return;
+    }
+
+    // 3. Double-Submission Lock Activation
+    setLoading(true);
+
+    // 4. Try/Catch Error Resilience
+    try {
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `${formData.propertyKind} in ${formData.neighborhood}`,
+          propertyKind: formData.propertyKind,
+          category: formData.type,
+          city: formData.city,
+          neighborhood: formData.neighborhood.trim(),
+          address: `${formData.neighborhood.trim()}, ${formData.city.toUpperCase()}`,
+          annualRent: Number(formData.priceYearly),
+          cautionDeposit: Number(formData.cautionDeposit || 0),
+          idDocumentType: formData.idDocumentType,
+          idNumber: formData.idNumber.trim(),
+          status: 'pending_audit',
+          photos: uploadedPhotos,
+          listerRole,
+          listerName: formData.fullName.trim(),
+          listerPhone: phoneCheck.normalized,
+          listerEmail: formData.email.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to submit property for verification.');
+      }
+
+      // 5. Success Confirmation Flow
+      setSubmitted(true);
+    } catch (err) {
+      console.error('[RentBridge Submit Property Error]:', err);
+      setUploadError(err.message || 'A network error occurred while submitting for verification. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -538,6 +660,8 @@ export default function ListPropertyModal({ isOpen, onClose }) {
                     type="text"
                     required
                     placeholder="e.g. Lagos Lands Bureau File #4920/12 or C of O #..."
+                    value={formData.idNumber}
+                    onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs focus:outline-none focus:border-[#2D5A43]"
                   />
                 </div>
@@ -551,7 +675,9 @@ export default function ListPropertyModal({ isOpen, onClose }) {
                   <input
                     type="tel"
                     required
-                    placeholder="Landlord's direct phone number"
+                    placeholder="Landlord's direct phone number (e.g. 0803 123 4567)"
+                    value={formData.idNumber}
+                    onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs focus:outline-none focus:border-[#2D5A43]"
                   />
                 </div>
@@ -566,6 +692,8 @@ export default function ListPropertyModal({ isOpen, onClose }) {
                     type="text"
                     required
                     placeholder="NBA Reg: e.g. SCN/049182"
+                    value={formData.idNumber}
+                    onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-white border border-[#E8DFC8] text-xs focus:outline-none focus:border-[#2D5A43]"
                   />
                 </div>
@@ -576,19 +704,49 @@ export default function ListPropertyModal({ isOpen, onClose }) {
               </p>
             </div>
 
+            {/* Error Message Alert */}
+            {uploadError && (
+              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{uploadError}</span>
+              </div>
+            )}
+
             {/* Actions: Save as Draft vs Submit for Verification */}
             <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
               <button
                 type="button"
+                disabled={draftLoading || loading}
                 onClick={handleSaveDraft}
-                className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] text-xs font-bold border border-[#D7CBBB] transition-all cursor-pointer">
-                Save as Draft
+                className="w-full sm:w-1/3 py-3.5 rounded-xl bg-[#F5EFEB] hover:bg-[#EAE2D8] disabled:opacity-50 disabled:cursor-not-allowed text-[#1E3F2F] text-xs font-bold border border-[#D7CBBB] transition-all cursor-pointer flex items-center justify-center gap-2">
+                {draftLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#2D5A43]" />
+                    <span>Saving Draft to Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <BookmarkCheck className="w-4 h-4" />
+                    <span>Save as Draft</span>
+                  </>
+                )}
               </button>
 
               <button
                 type="submit"
-                className="w-full sm:w-2/3 py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-md transition-all cursor-pointer">
-                Submit Property & Photos for Verification
+                disabled={loading || draftLoading}
+                className="w-full sm:w-2/3 py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:bg-[#8F8372] disabled:cursor-not-allowed text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2">
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                    <span>Transmitting to Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Submit Property & Photos for Verification</span>
+                  </>
+                )}
               </button>
             </div>
 

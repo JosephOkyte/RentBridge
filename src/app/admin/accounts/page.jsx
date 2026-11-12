@@ -15,14 +15,17 @@ import {
   AlertCircle,
   Clock,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 
 export default function StealthAccountsMonitorPage() {
   const [accounts, setAccounts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [inspectingId, setInspectingId] = useState(null);
   const [auditLogNotice, setAuditLogNotice] = useState('');
+  const [auditLogError, setAuditLogError] = useState('');
 
   useEffect(() => {
     fetch('/api/admin/audit')
@@ -36,11 +39,16 @@ export default function StealthAccountsMonitorPage() {
   }, []);
 
   const handleInspect = async (account) => {
+    // 1. Double-Submission Lock Guard
+    if (inspectingId || !account) return;
+    setInspectingId(account.id);
     setSelectedAccount(account);
     setAuditLogNotice('');
+    setAuditLogError('');
 
     // Trigger silent server-side audit log without notifying account owner
     try {
+      // 3. Try/Catch Error Resilience
       const res = await fetch('/api/admin/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,9 +59,15 @@ export default function StealthAccountsMonitorPage() {
         }),
       });
       const data = await res.json();
-      setAuditLogNotice(data.message);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to record audit inspection log.');
+      }
+      // 4. Success Confirmation Flow
+      setAuditLogNotice(data.message || 'Audit log generated without lister alert.');
     } catch (err) {
-      console.error(err);
+      setAuditLogError(err.message || 'Audit dispatch failed. Please retry.');
+    } finally {
+      setInspectingId(null);
     }
   };
 
@@ -171,10 +185,21 @@ export default function StealthAccountsMonitorPage() {
 
                   <td className="p-4 text-right">
                     <button
+                      type="button"
+                      disabled={inspectingId === acc.id}
                       onClick={() => handleInspect(acc)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Stealth Inspect</span>
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-60 text-white text-xs font-bold transition-all shadow-xs cursor-pointer">
+                      {inspectingId === acc.id ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8AE0B3]" />
+                          <span>Inspecting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Stealth Inspect</span>
+                        </>
+                      )}
                     </button>
                   </td>
                 </tr>
@@ -255,8 +280,14 @@ export default function StealthAccountsMonitorPage() {
 
             {/* Audit Log Result */}
             {auditLogNotice && (
-              <p className="text-[11px] text-[#8F8372] font-mono text-center">
-                {auditLogNotice}
+              <p className="text-[11px] text-[#2D5A43] font-mono text-center font-bold">
+                ✓ {auditLogNotice}
+              </p>
+            )}
+
+            {auditLogError && (
+              <p className="text-[11px] text-red-600 font-mono text-center font-bold">
+                ⚠ {auditLogError}
               </p>
             )}
 

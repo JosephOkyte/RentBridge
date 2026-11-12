@@ -17,7 +17,8 @@ import {
   Lock,
   ArrowLeft,
   Calendar,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { formatNaira } from '../../../utils/formatters';
 
@@ -26,7 +27,9 @@ export default function MyPropertiesPage() {
   const [activeTab, setActiveTab] = useState('all');
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
   const [rentedSuccessMsg, setRentedSuccessMsg] = useState('');
+  const [rentedErrorMsg, setRentedErrorMsg] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -64,20 +67,33 @@ export default function MyPropertiesPage() {
 
   // Mark property as Rented
   const handleMarkAsRented = async (propertyId) => {
+    // 1. Double-Submission Lock Guard
+    if (actionLoadingId || !propertyId) return;
+    setActionLoadingId(propertyId);
+    setRentedSuccessMsg('');
+    setRentedErrorMsg('');
+
     try {
+      // 3. Try/Catch Error Resilience
       const res = await fetch('/api/properties', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ propertyId, status: 'rented' }),
       });
-      if (res.ok) {
-        setRentedSuccessMsg('Property successfully marked as Rented! It has been removed from the public marketplace.');
-        setProperties((prev) =>
-          prev.map((p) => (p.id === propertyId ? { ...p, status: 'rented' } : p))
-        );
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update property status.');
       }
+
+      // 4. Success Confirmation Flow
+      setRentedSuccessMsg('Property successfully marked as Rented! It has been removed from the public marketplace.');
+      setProperties((prev) =>
+        prev.map((p) => (p.id === propertyId ? { ...p, status: 'rented' } : p))
+      );
     } catch (err) {
-      console.error(err);
+      setRentedErrorMsg(err.message || 'Network error occurred while updating property status. Please retry.');
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -149,6 +165,16 @@ export default function MyPropertiesPage() {
         <div className="p-4 rounded-2xl bg-[#EBF2ED] border border-[#2D5A43]/30 text-xs font-bold text-[#2D5A43] flex items-center justify-between">
           <span>✓ {rentedSuccessMsg}</span>
           <button onClick={() => setRentedSuccessMsg('')} className="text-[#8F8372] hover:text-[#151816]">✕</button>
+        </div>
+      )}
+
+      {rentedErrorMsg && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 flex items-center justify-between animate-shake">
+          <span className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+            <span>{rentedErrorMsg}</span>
+          </span>
+          <button onClick={() => setRentedErrorMsg('')} className="text-red-500 hover:text-red-800">✕</button>
         </div>
       )}
 
@@ -292,9 +318,18 @@ export default function MyPropertiesPage() {
 
                     {property.status === 'active' && (
                       <button
+                        type="button"
+                        disabled={actionLoadingId === property.id}
                         onClick={() => handleMarkAsRented(property.id)}
-                        className="py-2.5 px-3 rounded-xl bg-[#151816] hover:bg-black text-white text-xs font-bold cursor-pointer transition-all">
-                        Mark as Rented
+                        className="py-2.5 px-3 rounded-xl bg-[#151816] hover:bg-black disabled:opacity-60 text-white text-xs font-bold cursor-pointer transition-all flex items-center justify-center gap-1.5 shrink-0">
+                        {actionLoadingId === property.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8AE0B3]" />
+                            <span>Updating...</span>
+                          </>
+                        ) : (
+                          <span>Mark as Rented</span>
+                        )}
                       </button>
                     )}
                   </div>

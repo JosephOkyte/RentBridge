@@ -16,7 +16,8 @@ import {
   Maximize2,
   Minimize2,
   ArrowRight,
-  Home
+  Home,
+  Loader2
 } from 'lucide-react';
 
 const INITIAL_MESSAGES = [
@@ -338,8 +339,12 @@ export default function AdaChatWidget() {
             <button
               type="submit"
               disabled={!inputValue.trim() || loading}
-              className="p-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white disabled:opacity-50 transition-all cursor-pointer">
-              <Send className="w-3.5 h-3.5" />
+              className="p-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center">
+              {loading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8AE0B3]" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
             </button>
           </form>
 

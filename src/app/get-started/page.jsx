@@ -17,7 +17,8 @@ import {
   Lock,
   Sparkles,
   Camera,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 
 function GetStartedContent() {
@@ -118,7 +119,10 @@ function GetStartedContent() {
 
   // Action: Commit and proceed to Clerk Sign-up or direct dashboard
   const handleProceed = async (roleId) => {
+    // 1. Double-Submission Lock Guard
+    if (committing) return;
     setCommitting(true);
+    setSelectedRole(roleId);
     setErrorMsg('');
 
     // Persist choice in client cookie & storage for Clerk signup / callback
@@ -130,6 +134,7 @@ function GetStartedContent() {
     // If user is ALREADY signed into Clerk, save the profile role directly
     if (isLoaded && user) {
       try {
+        // 3. Try/Catch Error Resilience
         const res = await fetch('/api/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -140,6 +145,7 @@ function GetStartedContent() {
           throw new Error(data.error || 'Failed to assign role.');
         }
 
+        // 4. Success Confirmation Flow
         if (roleId === 'tenant') {
           router.replace('/dashboard/tenant');
         } else {
@@ -147,7 +153,7 @@ function GetStartedContent() {
         }
         return;
       } catch (err) {
-        setErrorMsg(err.message);
+        setErrorMsg(err.message || 'Failed to initialize session. Please retry.');
         setCommitting(false);
         return;
       }
@@ -284,14 +290,24 @@ function GetStartedContent() {
                 {/* Card Action Button */}
                 <div className="pt-6">
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleProceed(role.id);
                     }}
                     disabled={committing}
-                    className={`w-full py-3 px-4 rounded-xl text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer ${role.buttonBg}`}>
-                    <span>{committing && selectedRole === role.id ? 'Connecting...' : `Join as ${role.title.replace('Prospective ', '').replace('Property ', '')}`}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    className={`w-full py-3 px-4 rounded-xl text-white text-xs sm:text-sm font-black flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${role.buttonBg}`}>
+                    {committing && selectedRole === role.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Connecting to Portal...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>{`Join as ${role.title.replace('Prospective ', '').replace('Property ', '')}`}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

@@ -17,7 +17,8 @@ import {
   Clock,
   Sparkles,
   UserCheck,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { formatNaira } from '../../../utils/formatters';
 
@@ -26,6 +27,7 @@ export default function VerificationDeskPage() {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState('');
+  const [actionError, setActionError] = useState('');
   const [revisionModalOpen, setRevisionModalOpen] = useState(false);
   const [feedbackNotes, setFeedbackNotes] = useState('');
 
@@ -44,11 +46,14 @@ export default function VerificationDeskPage() {
   }, []);
 
   const handleApprove = async () => {
-    if (!selectedSubmission) return;
+    // 1. Double-Submission Lock Guard
+    if (actionLoading || !selectedSubmission) return;
     setActionLoading(true);
     setActionMessage('');
+    setActionError('');
 
     try {
+      // 3. Try/Catch Error Resilience
       const res = await fetch('/api/admin/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -62,12 +67,16 @@ export default function VerificationDeskPage() {
         }),
       });
       const data = await res.json();
-      setActionMessage(data.message);
-      // Remove approved item from pending queue
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to approve listing.');
+      }
+      
+      // 4. Success Confirmation Flow
+      setActionMessage(data.message || 'Property verified and published live to map successfully.');
       setSubmissions((prev) => prev.filter((p) => p.id !== selectedSubmission.id));
       setSelectedSubmission(submissions[1] || null);
     } catch (err) {
-      console.error(err);
+      setActionError(err.message || 'Network error occurred while approving listing. Please retry.');
     } finally {
       setActionLoading(false);
     }
@@ -75,10 +84,22 @@ export default function VerificationDeskPage() {
 
   const handleRequestRevision = async (e) => {
     e.preventDefault();
-    if (!selectedSubmission) return;
+    // 1. Double-Submission Lock Guard
+    if (actionLoading || !selectedSubmission) return;
+
+    // 2. Client-Side Input Validation
+    const trimmedNotes = (feedbackNotes || '').trim();
+    if (trimmedNotes.length < 5) {
+      setActionError('Please provide clear revision feedback (minimum 5 characters).');
+      return;
+    }
+
     setActionLoading(true);
+    setActionMessage('');
+    setActionError('');
 
     try {
+      // 3. Try/Catch Error Resilience
       const res = await fetch('/api/admin/audit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,16 +109,22 @@ export default function VerificationDeskPage() {
           propertyTitle: selectedSubmission.title,
           listerEmail: selectedSubmission.listerEmail,
           listerName: selectedSubmission.listerName,
-          feedbackNotes,
+          feedbackNotes: trimmedNotes,
         }),
       });
       const data = await res.json();
-      setActionMessage(data.message);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to request revisions.');
+      }
+
+      // 4. Success Confirmation Flow
+      setActionMessage(data.message || 'Listing held in draft. Revisions checklist transmitted to lister.');
       setRevisionModalOpen(false);
+      setFeedbackNotes('');
       setSubmissions((prev) => prev.filter((p) => p.id !== selectedSubmission.id));
       setSelectedSubmission(submissions[1] || null);
     } catch (err) {
-      console.error(err);
+      setActionError(err.message || 'Network error occurred while transmitting revision request.');
     } finally {
       setActionLoading(false);
     }
@@ -138,6 +165,13 @@ export default function VerificationDeskPage() {
         <div className="p-4 rounded-2xl bg-[#EBF2ED] border border-[#2D5A43] text-xs font-bold text-[#1E3F2F] flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-[#2D5A43] shrink-0" />
           <span>{actionMessage}</span>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 flex items-center gap-2 animate-shake">
+          <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+          <span>{actionError}</span>
         </div>
       )}
 
@@ -279,16 +313,28 @@ export default function VerificationDeskPage() {
                 type="button"
                 disabled={actionLoading}
                 onClick={handleApprove}
-                className="w-full py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>100% Verify & Publish Live to Map</span>
+                className="w-full py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-60 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2">
+                {actionLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                    <span>Transmitting Approval to Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>100% Verify & Publish Live to Map</span>
+                  </>
+                )}
               </button>
 
               <button
                 type="button"
                 disabled={actionLoading}
-                onClick={() => setRevisionModalOpen(true)}
-                className="w-full py-3 rounded-xl bg-white hover:bg-[#FEF2F2] border border-[#FCA5A5] text-[#B91C1C] text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2">
+                onClick={() => {
+                  setActionError('');
+                  setRevisionModalOpen(true);
+                }}
+                className="w-full py-3 rounded-xl bg-white hover:bg-[#FEF2F2] disabled:opacity-60 border border-[#FCA5A5] text-[#B91C1C] text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2">
                 <XCircle className="w-4 h-4" />
                 <span>Request Revisions (e.g. Clearer Street Photos)</span>
               </button>
@@ -332,8 +378,15 @@ export default function VerificationDeskPage() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 rounded-xl bg-[#2D5A43] text-white text-xs font-bold shadow-md cursor-pointer">
-                Send Revisions Request via Resend
+                className="w-full py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-60 text-white text-xs font-bold shadow-md cursor-pointer flex items-center justify-center gap-2 transition-all">
+                {actionLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                    <span>Transmitting Revisions to Lister...</span>
+                  </>
+                ) : (
+                  <span>Send Revisions Request via Resend</span>
+                )}
               </button>
             </form>
           </div>

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { X, Calendar, Clock, ShieldCheck, CheckCircle2, User, Phone, AlertCircle, Send } from 'lucide-react';
+import { X, Calendar, Clock, ShieldCheck, CheckCircle2, User, Phone, AlertCircle, Send, Loader2 } from 'lucide-react';
 import { formatNaira } from '../utils/formatters';
+import { validateNigerianPhone, validateEmail, validateRequired } from '../utils/validation';
 
 export default function InspectionModal({ property, onClose }) {
   const { user } = useUser();
@@ -34,9 +35,48 @@ export default function InspectionModal({ property, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+
+    // 1. Double-Submission Lock Guard
+    if (loading) return;
+
+    // 2. Client-Side Input Validation (Before Network Request)
     setErrorMessage('');
 
+    const nameCheck = validateRequired(formData.fullName, 'Full Name', 2);
+    if (!nameCheck.valid) {
+      setErrorMessage(nameCheck.error);
+      return;
+    }
+
+    const phoneCheck = validateNigerianPhone(formData.phone);
+    if (!phoneCheck.valid) {
+      setErrorMessage(phoneCheck.error);
+      return;
+    }
+
+    const emailCheck = validateEmail(formData.email);
+    if (!emailCheck.valid) {
+      setErrorMessage(emailCheck.error);
+      return;
+    }
+
+    if (!formData.preferredDate) {
+      setErrorMessage('Please select a preferred viewing date.');
+      return;
+    }
+
+    const selectedDateObj = new Date(formData.preferredDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDateObj < today) {
+      setErrorMessage('Please select a current or future date for the physical inspection.');
+      return;
+    }
+
+    // 3. Double-Submission Lock State Activation
+    setLoading(true);
+
+    // 4. Try/Catch Error Resilience
     try {
       const res = await fetch('/api/inspections', {
         method: 'POST',
@@ -47,22 +87,29 @@ export default function InspectionModal({ property, onClose }) {
           listerName: property.lister?.name || 'Direct Custodian',
           listerPhone: property.lister?.phone || '',
           listerEmail: property.lister?.email || 'custodian@rentbridge.ng',
-          scheduledDate: formData.preferredDate || new Date().toISOString().split('T')[0],
+          scheduledDate: formData.preferredDate,
           timeSlot: formData.preferredTime,
-          notes: formData.notes,
-          phone: formData.phone,
+          notes: formData.notes?.trim() || '',
+          phone: phoneCheck.normalized,
+          email: formData.email.trim(),
+          fullName: formData.fullName.trim(),
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit inspection request');
+        throw new Error(data.error || 'Failed to submit inspection request to RentBridge database.');
       }
 
+      // 5. Success Confirmation Flow
       setSubmitted(true);
     } catch (err) {
-      setErrorMessage(err.message);
+      console.error('[RentBridge Inspection Submit Error]:', err);
+      setErrorMessage(
+        err.message || 'A network error occurred while securing your viewing slot. Please check your connection and try again.'
+      );
     } finally {
+      // Unlock button in all scenarios
       setLoading(false);
     }
   };
@@ -222,9 +269,12 @@ export default function InspectionModal({ property, onClose }) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer">
+                className="w-full py-3.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:bg-[#8F8372] disabled:cursor-not-allowed text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all">
                 {loading ? (
-                  <span>Transmitting Request...</span>
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
+                    <span>Transmitting to Database...</span>
+                  </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
