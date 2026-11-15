@@ -19,7 +19,8 @@ import {
   Search,
   MessageCircle,
   Phone,
-  Camera
+  Camera,
+  Sparkles
 } from 'lucide-react';
 import ProfilePhotoModal from '../../../components/ProfilePhotoModal';
 import { formatNaira } from '../../../utils/formatters';
@@ -97,6 +98,13 @@ export default function TenantDashboardPage() {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold border border-white/20 transition-all">
               <Calendar className="w-4 h-4 text-[#8AE0B3]" />
               <span>My Booked Inspections ({inspections.length})</span>
+            </Link>
+
+            <Link
+              href="/requests"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-bold border border-white/20 transition-all">
+              <Sparkles className="w-4 h-4 text-[#8AE0B3]" />
+              <span>Wanted Seeker Board</span>
             </Link>
 
             <button

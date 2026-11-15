@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Calendar, MapPin, Building, Search, CheckCircle, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, Calendar, MapPin, Building, Search, CheckCircle, Sparkles, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { CITIES, CATEGORIES } from '../data/properties';
 import { IMAGES } from '../utils/images';
 
@@ -81,11 +82,11 @@ const HERO_SLIDES = [
   }
 ];
 
-export default function Hero({ 
-  selectedCity, 
-  setSelectedCity, 
-  selectedCategory, 
-  setSelectedCategory, 
+export default function Hero({
+  selectedCity,
+  setSelectedCity,
+  selectedCategory,
+  setSelectedCategory,
   onSearchings
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -132,15 +133,15 @@ export default function Hero({
   };
 
   return (
-    <section 
-      id="hero" 
+    <section
+      id="hero"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       className="relative overflow-hidden pt-8 pb-16 sm:pt-14 sm:pb-24 lg:pt-18 lg:pb-28 bg-[#151816] text-white select-none">
-      
+
       {/* Background Slideshow: Bulletproof Individual Slide Track with Zero Bleed */}
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#151816]">
         {HERO_SLIDES.map((slide, index) => {
@@ -200,7 +201,7 @@ export default function Hero({
 
       {/* Hero Foreground Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-20 text-center space-y-5 sm:space-y-7">
-        
+
         {/* Top Floating Pill: Active Slide Location */}
         <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] sm:text-xs font-semibold shadow-sm max-w-full">
           <MapPin className="w-3.5 h-3.5 text-[#8AE0B3] shrink-0" />
@@ -225,7 +226,7 @@ export default function Hero({
 
           {/* Subtitle */}
           <p className="text-sm sm:text-base lg:text-lg text-[#E2D7C8] leading-relaxed max-w-3xl mx-auto font-normal px-2 sm:px-0 drop-shadow">
-            No street agents. No exorbitant 10% agency cuts. No ₦5,000 inspection fees. Connect with verified property owners, caretakers, and legal custodians across 
+            No street agents. No exorbitant 10% agency cuts. No ₦5,000 inspection fees. Connect with verified property owners, caretakers, and legal custodians across
             <strong className="text-white font-semibold"> Lagos, Abuja, Port Harcourt,</strong> and <strong className="text-white font-semibold">Enugu</strong>.
           </p>
         </div>
@@ -249,7 +250,7 @@ export default function Hero({
         {/* Search Box (Mobile-optimized touch inputs) */}
         <div className="max-w-4xl mx-auto p-3 sm:p-4 bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl shadow-2xl border border-white/40 text-[#151816]">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
-            
+
             {/* City Selector */}
             <div className="px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl bg-[#FBF9F5] border border-[#E8DFC8] text-left">
               <label className="block text-[10px] font-bold uppercase tracking-wider text-[#8F8372]">Location City</label>
@@ -292,6 +293,19 @@ export default function Hero({
               </button>
             </div>
           </div>
+
+          {/* Reverse Matchboard Prompt */}
+          <div className="mt-2.5 pt-2.5 border-t border-[#E8DFC8]/60 flex flex-wrap items-center justify-center gap-1.5 text-xs text-[#4B524D]">
+            <span>Can&apos;t find your exact spec?</span>
+            <Link
+              href="/requests"
+              className="inline-flex items-center gap-1 font-bold text-[#2D5A43] hover:text-[#1E3F2F] hover:underline cursor-pointer">
+              <Sparkles className="w-3.5 h-3.5 text-[#2D5A43]" />
+              <span>Post on the Wanted Matchboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+            <span className="text-[11px] text-[#8F8372] hidden sm:inline">(Landlords pitch to you with ₦0 fee)</span>
+          </div>
         </div>
 
         {/* Quick Guarantees (2-column on mobile, row on tablet/desktop) */}
@@ -321,11 +335,10 @@ export default function Hero({
               key={dotIdx}
               onClick={() => setCurrentSlide(dotIdx)}
               aria-label={`Go to slide ${dotIdx + 1}`}
-              className={`h-1.5 sm:h-2 rounded-full transition-all cursor-pointer p-1 -m-1 ${
-                dotIdx === currentSlide
+              className={`h-1.5 sm:h-2 rounded-full transition-all cursor-pointer p-1 -m-1 ${dotIdx === currentSlide
                   ? 'w-6 sm:w-8 bg-[#8AE0B3]'
                   : 'w-1.5 sm:w-2 bg-white/40 hover:bg-white/70'
-              }`}
+                }`}
             />
           ))}
         </div>

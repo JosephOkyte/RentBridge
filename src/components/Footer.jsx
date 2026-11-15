@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, MapPin, Phone, Mail, ArrowUp } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldCheck, MapPin, Phone, Mail, ArrowUp, Sparkles } from 'lucide-react';
 
 export default function Footer({ onNavigateToSection, onOpenListModal, onSelectCategory }) {
   const scrollToTop = () => {
@@ -101,6 +102,12 @@ export default function Footer({ onNavigateToSection, onOpenListModal, onSelectC
                 className="text-left hover:text-white transition-colors text-[#8AE0B3] font-semibold cursor-pointer">
                 • About RentBridge & Mission
               </button>
+              <Link 
+                href="/requests" 
+                className="text-left hover:text-white transition-colors text-[#8AE0B3] font-bold flex items-center gap-1 cursor-pointer">
+                <Sparkles className="w-3 h-3 text-[#8AE0B3]" />
+                <span>Wanted Seeker Matchboard</span>
+              </Link>
             </div>
 
             <div className="pt-3">

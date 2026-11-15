@@ -29,6 +29,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import ProfilePhotoModal from '../../../components/ProfilePhotoModal';
+import ProposePropertyModal from '../../../components/ProposePropertyModal';
 import { formatNaira } from '../../../utils/formatters';
 import EmptyState from '../../../components/EmptyState';
 
@@ -38,6 +39,8 @@ export default function LandlordDashboardPage() {
   const [profile, setProfile] = useState(null);
   const [properties, setProperties] = useState([]);
   const [inspections, setInspections] = useState([]);
+  const [matchingRequests, setMatchingRequests] = useState([]);
+  const [proposeModalRequest, setProposeModalRequest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
 
@@ -65,6 +68,12 @@ export default function LandlordDashboardPage() {
         const inspData = await inspRes.json();
         if (inspData.inspections) {
           setInspections(inspData.inspections);
+        }
+
+        const reqRes = await fetch('/api/requests');
+        const reqData = await reqRes.json();
+        if (reqData.requests) {
+          setMatchingRequests(reqData.requests);
         }
       } catch (err) {
         console.warn('Landlord dashboard fetch error:', err);
@@ -288,11 +297,106 @@ export default function LandlordDashboardPage() {
         )}
       </div>
 
+      {/* Matching Tenant Demands (Seeker Matchboard) */}
+      <div className="bg-white rounded-3xl border border-[#E8DFC8] shadow-xs overflow-hidden">
+        <div className="p-6 border-b border-[#E8DFC8] flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#EBF2ED] text-[#2D5A43] flex items-center justify-center">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-[#151816]">
+                Matching Tenant Demands (Wanted Matchboard)
+              </h2>
+              <p className="text-xs text-[#8F8372] mt-0.5">
+                Vetted tenants actively looking for houses in your hub with 100% masked contact info.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/requests"
+            className="text-xs font-bold text-[#2D5A43] hover:underline flex items-center gap-1">
+            <span>Browse All ({matchingRequests.length})</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {matchingRequests.length === 0 ? (
+          <div className="p-6">
+            <EmptyState
+              icon={Sparkles}
+              badge="Matchboard Synchronized"
+              title="No live tenant demands in your hub right now"
+              description="When verified tenants post new housing requests matching your active locations, they will appear here instantly for 1-click property proposal."
+              primaryAction={{
+                label: "View All Public Requests →",
+                href: "/requests",
+              }}
+              tip="Only Phase 1 Verified Custodians can propose properties to seekers."
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-[#E8DFC8]">
+            {matchingRequests.slice(0, 3).map((req) => (
+              <div key={req.id || req.ticketId} className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-[#FBF9F5] transition-all">
+                <div className="space-y-1.5 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-xs font-black text-[#2D5A43] bg-[#EBF2ED] px-2 py-0.5 rounded-md border border-[#8AE0B3]/40">
+                      {req.ticketId}
+                    </span>
+                    <span className="text-xs font-extrabold text-[#151816]">
+                      {req.seekerName}
+                    </span>
+                    <span className="text-[10px] text-[#2D5A43] bg-[#EBF2ED] px-1.5 py-0.5 rounded font-bold">
+                      Shielded: {req.seekerPhoneMasked}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#4B524D]">
+                    Seeking: <strong className="text-[#151816]">{req.propertyTypeLabel}</strong> in <span className="capitalize font-semibold text-[#2D5A43]">{req.cityName || req.city}</span> ({req.preferredLocations?.slice(0, 2).join(', ')})
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="font-bold text-[#2D5A43]">
+                      Budget: {formatNaira(req.minBudget)} – {formatNaira(req.maxBudget)}/yr
+                    </span>
+                    <span className="text-[#8F8372]">•</span>
+                    <span className="text-[#4B524D]">
+                      Timeline: <strong>{req.moveInTimelineLabel || 'Ready'}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setProposeModalRequest(req)}
+                  className="px-4 py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold transition-all shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
+                  <Building2 className="w-3.5 h-3.5" />
+                  <span>Propose My Property</span>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <ProfilePhotoModal
         isOpen={photoModalOpen}
         onClose={() => setPhotoModalOpen(false)}
         onPhotoUpdated={() => {
           if (typeof window !== 'undefined') window.location.reload();
+        }}
+      />
+
+      <ProposePropertyModal
+        isOpen={Boolean(proposeModalRequest)}
+        onClose={() => setProposeModalRequest(null)}
+        request={proposeModalRequest}
+        myProperties={properties}
+        onSuccess={() => {
+          // Refresh requests
+          fetch('/api/requests').then(r => r.json()).then(d => {
+            if (d.requests) setMatchingRequests(d.requests);
+          });
         }}
       />
     </div>

@@ -1,16 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
-import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info, User, LayoutDashboard } from 'lucide-react';
+import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info, User, LayoutDashboard, Sparkles } from 'lucide-react';
 
 export default function Navbar({ onOpenListModal, onNavigateToSection }) {
   const router = useRouter();
   const pathname = usePathname();
   const { isSignedIn, isLoaded } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Universal navigation handler: smooth scroll if on homepage, else route to /#sectionId
   const handleNav = (sectionId) => {
@@ -84,6 +89,14 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
               </Link>
             )}
 
+            <Link
+              href="/requests"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#EBF2ED] hover:bg-[#8AE0B3]/30 text-[#1E3F2F] border border-[#8AE0B3]/50 transition-all cursor-pointer">
+              <Sparkles className="w-3.5 h-3.5 text-[#2D5A43]" />
+              <span>Wanted Board</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A43] animate-pulse"></span>
+            </Link>
+
             <button
               onClick={() => handleNav('properties')}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#2D5A43] hover:bg-[#1E3F2F] text-[#FBF9F5] transition-all shadow-md shadow-[#2D5A43]/25 cursor-pointer">
@@ -93,7 +106,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
 
             {/* Clerk Authentication Controls */}
             <div className="pl-2 border-l border-[#E8DFC8] flex items-center gap-2">
-              {isLoaded && !isSignedIn && (
+              {mounted && isLoaded && !isSignedIn && (
                 <>
                   <SignInButton mode="modal">
                     <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#4B524D] hover:text-[#151816] hover:bg-[#F5EFEB] transition-all cursor-pointer">
@@ -109,7 +122,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
                   </Link>
                 </>
               )}
-              {isLoaded && isSignedIn && (
+              {mounted && isLoaded && isSignedIn && (
                 <div className="flex items-center gap-2">
                   <Link
                     href="/dashboard"
@@ -132,7 +145,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
 
           {/* Action CTAs (Mobile) */}
           <div className="sm:hidden flex items-center gap-2">
-            {isLoaded && !isSignedIn && (
+            {mounted && isLoaded && !isSignedIn && (
               <>
                 <SignInButton mode="modal">
                   <button className="px-2.5 py-1.5 rounded-xl text-xs font-bold text-[#4B524D] bg-[#F5EFEB] border border-[#E8DFC8]">
@@ -146,7 +159,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
                 </Link>
               </>
             )}
-            {isLoaded && isSignedIn && (
+            {mounted && isLoaded && isSignedIn && (
               <UserButton afterSignOutUrl="/" />
             )}
             {isSignedIn ? (
@@ -182,6 +195,14 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
               <Home className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span>Vacancies</span>
             </button>
+
+            <Link
+              href="/requests"
+              className="px-3 py-1.5 rounded-xl text-xs font-bold text-[#1E3F2F] bg-[#EBF2ED] hover:bg-[#8AE0B3]/30 border border-[#8AE0B3]/50 transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer">
+              <Sparkles className="w-3.5 h-3.5 text-[#2D5A43]" />
+              <span>Wanted Board</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A43] animate-pulse"></span>
+            </Link>
 
             <button 
               onClick={() => handleNav('map-explorer')} 
@@ -232,6 +253,16 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             <Home className="w-4 h-4 text-[#2D5A43]" />
             <span>Browse All Vacancies</span>
           </button>
+          <Link
+            href="/requests"
+            onClick={() => setMobileMenuOpen(false)}
+            className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#2D5A43] bg-[#EBF2ED] flex items-center justify-between cursor-pointer">
+            <span className="flex items-center gap-2.5">
+              <Sparkles className="w-4 h-4 text-[#2D5A43]" />
+              <span>Wanted Seeker Matchboard</span>
+            </span>
+            <span className="text-[10px] font-extrabold bg-[#2D5A43] text-white px-2 py-0.5 rounded-full">Live Requests</span>
+          </Link>
           <button 
             onClick={() => { handleNav('map-explorer'); setMobileMenuOpen(false); }}
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#151816] hover:bg-[#F5EFEB] flex items-center justify-between cursor-pointer">

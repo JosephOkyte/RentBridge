@@ -30,6 +30,7 @@ const INITIAL_MESSAGES = [
 ];
 
 const QUICK_PILLS = [
+  { label: '✨ Wanted Seeker Matchboard', prompt: 'Tell me about the Wanted Seeker Matchboard and how to post a housing request' },
   { label: '🏡 Houses in Lekki Phase 1', prompt: 'Show me verified houses in Lekki Phase 1 with transparent terms and ₦0 agent fees' },
   { label: '🏢 Offices in Abuja', prompt: 'Find me commercial plaza spaces or offices in Wuse 2 or Maitama Abuja' },
   { label: '🎟️ How Gate Pass Works', prompt: 'How does the free physical inspection and official gate pass code work?' },

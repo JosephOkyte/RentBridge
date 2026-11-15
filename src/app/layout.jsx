@@ -34,7 +34,29 @@ export default function RootLayout({ children }) {
                            str.indexOf('chrome-extension://') !== -1 ||
                            str.indexOf('moz-extension://') !== -1 ||
                            str.indexOf('ethereum') !== -1 ||
+                           str.indexOf('component renderer did not mount') !== -1 ||
+                           str.indexOf('clerk ui') !== -1 ||
                            str.indexOf('ejbalbakoplchlghecdalmeeeajnimhm') !== -1;
+                  }
+
+                  // Intercept console.error to prevent transient Clerk UI chunk timeouts from triggering Next.js dev overlay
+                  if (typeof console !== 'undefined' && console.error) {
+                    var origConsoleError = console.error;
+                    console.error = function() {
+                      var argsStr = '';
+                      try {
+                        argsStr = Array.prototype.slice.call(arguments).map(function(a) {
+                          return typeof a === 'object' ? JSON.stringify(a) : String(a);
+                        }).join(' ');
+                      } catch(e) {
+                        argsStr = String(arguments[0] || '');
+                      }
+                      if (argsStr.indexOf('[Clerk UI]') !== -1 || argsStr.indexOf('Component renderer did not mount') !== -1) {
+                        if (console.warn) console.warn('[Clerk UI Filtered]:', argsStr);
+                        return;
+                      }
+                      origConsoleError.apply(console, arguments);
+                    };
                   }
 
                   window.addEventListener('unhandledrejection', function(event) {

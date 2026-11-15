@@ -18,10 +18,13 @@ function MapViewHandler({ center, zoom }) {
   return null;
 }
 
-export default function MapExplorer({ 
-  selectedCity, 
-  setSelectedCity, 
-  onSelectProperty 
+const CARTO_API_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY || 'cb1_58qe_1_944772f165380190d225d456';
+const CARTO_TILE_URL = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
+
+export default function MapExplorer({
+  selectedCity,
+  setSelectedCity,
+  onSelectProperty
 }) {
   const [mapCategory, setMapCategory] = useState('all');
   const [selectedProperty, setSelectedProperty] = useState(null);
@@ -72,7 +75,7 @@ export default function MapExplorer({
   return (
     <section id="map-explorer" className="py-16 bg-[#FBF9F5]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
@@ -97,7 +100,7 @@ export default function MapExplorer({
 
         {/* City & Category Filter Bar */}
         <div className="bg-white p-3 rounded-2xl border border-[#E8DFC8] shadow-sm mb-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          
+
           {/* City Jump Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             <span className="text-xs font-bold text-[#4B524D] mr-1 shrink-0">Jump to:</span>
@@ -105,11 +108,10 @@ export default function MapExplorer({
               <button
                 key={city.id}
                 onClick={() => setSelectedCity(city.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${
-                  selectedCity === city.id
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 active:scale-95 cursor-pointer ${selectedCity === city.id
                     ? 'bg-[#1E3F2F] text-white shadow-sm'
                     : 'bg-[#F5EFEB] text-[#252926] hover:bg-[#E8DFC8]'
-                }`}>
+                  }`}>
                 <Navigation className="w-3 h-3 text-[#8AE0B3]" />
                 {city.name}
               </button>
@@ -129,11 +131,10 @@ export default function MapExplorer({
                 <button
                   key={cat.id}
                   onClick={() => setMapCategory(cat.id)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
-                    mapCategory === cat.id
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${mapCategory === cat.id
                       ? 'bg-[#2D5A43] text-white shadow-sm'
                       : 'text-[#3F4641] hover:text-[#151816]'
-                  }`}>
+                    }`}>
                   {cat.label}
                 </button>
               ))}
@@ -143,7 +144,7 @@ export default function MapExplorer({
 
         {/* Map Layout Container */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
+
           {/* Main Leaflet / Google Map */}
           <div className="lg:col-span-8 bg-white p-2 rounded-2xl sm:rounded-3xl border border-[#E2D7C8] shadow-lg overflow-hidden h-[390px] sm:h-[520px] relative">
             <MapContainer
@@ -151,13 +152,15 @@ export default function MapExplorer({
               zoom={mapZoom}
               scrollWheelZoom={false}
               className="h-full w-full rounded-2xl">
-              
+
               <MapViewHandler center={mapCenter} zoom={mapZoom} />
 
-              {/* CartoDB Positron clean map layer */}
+              {/* CartoDB Voyager clean map layer with authenticated API key */}
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                url={CARTO_TILE_URL}
+                subdomains="abcd"
+                maxZoom={20}
               />
 
               {/* Map Markers */}
@@ -175,8 +178,8 @@ export default function MapExplorer({
                     }}>
                     <Popup className="custom-popup">
                       <div className="p-1 space-y-2 text-[#151816] max-w-xs font-['Plus_Jakarta_Sans',sans-serif]">
-                        <img 
-                          src={prop.image} 
+                        <img
+                          src={prop.image}
                           alt={prop.title}
                           className="w-full h-24 object-cover rounded-lg"
                         />
@@ -283,7 +286,7 @@ export default function MapExplorer({
                   </button>
 
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${selectedProperty.coordinates[0]},${selectedProperty.coordinates[1]}`}
+                    href={`https://www.googlNowe.com/maps/search/?api=1&query=${selectedProperty.coordinates[0]},${selectedProperty.coordinates[1]}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-2 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#D7CBBB]">
