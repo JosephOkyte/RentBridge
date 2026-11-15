@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser, SignInButton, UserButton } from '@clerk/nextjs';
-import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, ArrowRight, Calculator, Home, Info, User, LayoutDashboard, Sparkles } from 'lucide-react';
+import { ShieldCheck, MapPin, Building2, PlusCircle, Menu, X, Calculator, Home, Info, User, LayoutDashboard, Sparkles } from 'lucide-react';
 
 export default function Navbar({ onOpenListModal, onNavigateToSection }) {
   const router = useRouter();
@@ -69,92 +69,42 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             </div>
           </Link>
 
-          {/* Action CTAs (Desktop) */}
-          <div className="hidden sm:flex items-center gap-3">
-            {isSignedIn ? (
-              <Link
-                href="/dashboard/properties/new"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all shadow-sm cursor-pointer">
-                <PlusCircle className="w-4 h-4 text-[#2D5A43]" />
-                <span>List Property</span>
-                <span className="text-[10px] bg-[#2D5A43]/10 text-[#2D5A43] px-1.5 py-0.5 rounded font-bold">Landlords & Reps</span>
-              </Link>
-            ) : (
-              <Link
-                href="/get-started?intent=list"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all shadow-sm cursor-pointer">
-                <PlusCircle className="w-4 h-4 text-[#2D5A43]" />
-                <span>List Property</span>
-                <span className="text-[10px] bg-[#2D5A43]/10 text-[#2D5A43] px-1.5 py-0.5 rounded font-bold">Landlords & Reps</span>
-              </Link>
+          {/* Header Action Controls (Desktop) */}
+          <div className="hidden sm:flex items-center gap-2">
+            {mounted && isLoaded && !isSignedIn && (
+              <>
+                <SignInButton mode="modal">
+                  <button className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#4B524D] hover:text-[#151816] hover:bg-[#F5EFEB] transition-all cursor-pointer">
+                    <span>Sign In</span>
+                  </button>
+                </SignInButton>
+
+                <Link
+                  href="/get-started"
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black bg-[#2D5A43] text-white hover:bg-[#1E3F2F] transition-all shadow-xs cursor-pointer">
+                  <User className="w-4 h-4" />
+                  <span>Get Started</span>
+                </Link>
+              </>
             )}
-
-            <Link
-              href="/requests"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#EBF2ED] hover:bg-[#8AE0B3]/30 text-[#1E3F2F] border border-[#8AE0B3]/50 transition-all cursor-pointer">
-              <Sparkles className="w-3.5 h-3.5 text-[#2D5A43]" />
-              <span>Wanted Board</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2D5A43] animate-pulse"></span>
-            </Link>
-
-            {/* Telegram Chatbot Link */}
-            <a
-              href="https://t.me/Oga_Homesbot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#EBF5FB] hover:bg-[#D4EBF8] text-[#0088cc] border border-[#0088cc]/30 transition-all cursor-pointer shadow-xs"
-              title="Chat with official Telegram Bot @Oga_Homesbot">
-              <svg className="w-3.5 h-3.5 fill-[#0088cc]" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
-              </svg>
-              <span>Telegram Bot</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-            </a>
-
-            <button
-              onClick={() => handleNav('properties')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#2D5A43] hover:bg-[#1E3F2F] text-[#FBF9F5] transition-all shadow-md shadow-[#2D5A43]/25 cursor-pointer">
-              <span>Find Rent</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-
-            {/* Clerk Authentication Controls */}
-            <div className="pl-2 border-l border-[#E8DFC8] flex items-center gap-2">
-              {mounted && isLoaded && !isSignedIn && (
-                <>
-                  <SignInButton mode="modal">
-                    <button className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-[#4B524D] hover:text-[#151816] hover:bg-[#F5EFEB] transition-all cursor-pointer">
-                      <span>Sign In</span>
-                    </button>
-                  </SignInButton>
-
-                  <Link
-                    href="/get-started"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-black bg-[#2D5A43] text-white hover:bg-[#1E3F2F] transition-all shadow-xs cursor-pointer">
-                    <User className="w-4 h-4" />
-                    <span>Get Started</span>
-                  </Link>
-                </>
-              )}
-              {mounted && isLoaded && isSignedIn && (
-                <div className="flex items-center gap-2">
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#EBF2ED] text-[#2D5A43] hover:bg-[#2D5A43] hover:text-white transition-all cursor-pointer">
-                    <LayoutDashboard className="w-3.5 h-3.5" />
-                    <span>Dashboard</span>
-                  </Link>
-                  <UserButton 
-                    afterSignOutUrl="/"
-                    appearance={{
-                      elements: {
-                        avatarBox: 'w-9 h-9 ring-2 ring-[#2D5A43]/30',
-                      },
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+            {mounted && isLoaded && isSignedIn && (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#EBF2ED] text-[#2D5A43] hover:bg-[#2D5A43] hover:text-white transition-all cursor-pointer">
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Dashboard</span>
+                </Link>
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: 'w-9 h-9 ring-2 ring-[#2D5A43]/30',
+                    },
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Action CTAs (Mobile) */}
@@ -176,25 +126,10 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             {mounted && isLoaded && isSignedIn && (
               <UserButton afterSignOutUrl="/" />
             )}
-            {isSignedIn ? (
-              <Link
-                href="/dashboard/properties/new"
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2D5A43] text-white shadow-sm flex items-center gap-1 active:scale-95 transition-transform">
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>List</span>
-              </Link>
-            ) : (
-              <Link
-                href="/get-started?intent=list"
-                className="px-3 py-1.5 rounded-xl text-xs font-bold bg-[#2D5A43] text-white shadow-sm flex items-center gap-1 active:scale-95 transition-transform">
-                <PlusCircle className="w-3.5 h-3.5" />
-                <span>List</span>
-              </Link>
-            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle Navigation Menu"
-              className="p-2 rounded-xl text-[#151816] bg-[#F5EFEB] hover:bg-[#EAE2D8] border border-[#E8DFC8] active:scale-95 transition-transform">
+              className="p-2 rounded-xl text-[#151816] bg-[#F5EFEB] hover:bg-[#EAE2D8] border border-[#E8DFC8] active:scale-95 transition-transform cursor-pointer">
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
