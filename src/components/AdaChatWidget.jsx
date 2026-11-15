@@ -16,35 +16,50 @@ import {
   Maximize2,
   Minimize2,
   ArrowRight,
+  ExternalLink,
   Home,
   Loader2
 } from 'lucide-react';
+
+const TELEGRAM_BOT_URL = process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || 'https://t.me/Oga_Homesbot';
+const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Oga_Homesbot';
 
 const INITIAL_MESSAGES = [
   {
     id: 'msg-welcome',
     role: 'ada',
-    content: "Hello! I'm Ada from RentBridge... Your personal housing concierge and anti-agent shield..\n\nHow can I help you today?",
+    content: "Hi, My name is Ada, the AI assistant. Welcome to RentBridge! How may I assist you today?",
     properties: [],
   },
 ];
 
 const QUICK_PILLS = [
-  { label: '✨ Wanted Seeker Matchboard', prompt: 'Tell me about the Wanted Seeker Matchboard and how to post a housing request' },
-  { label: '🏡 Houses in Lekki Phase 1', prompt: 'Show me verified houses in Lekki Phase 1 with transparent terms and ₦0 agent fees' },
-  { label: '🏢 Offices in Abuja', prompt: 'Find me commercial plaza spaces or offices in Wuse 2 or Maitama Abuja' },
-  { label: '🎟️ How Gate Pass Works', prompt: 'How does the free physical inspection and official gate pass code work?' },
-  { label: '📝 How to List Direct', prompt: 'I want to list my house directly as a Landlord or Caretaker. What is Phase 1 verification?' },
-  { label: '🚨 Report Fee Demand', prompt: 'Someone asked me to send ₦5,000 for gate pass and fuel before inspection' },
+  { label: '🏠 1. Residential', prompt: 'Show me verified residential flats and duplexes in Lagos, Abuja, and PH with ₦0 viewing fees' },
+  { label: '🏢 2. Commercial', prompt: 'Find commercial plaza spaces or offices in Abuja and Lagos' },
+  { label: '🔨 3. Wanted Board', prompt: 'Tell me about the Wanted Seeker Matchboard and how to post a housing request' },
+  { label: '🎟️ 4. Free Pass', prompt: 'How does the free physical inspection and official gate pass code work?' },
+  { label: '✈️ Telegram Bot', prompt: 'Tell me about the official Telegram chatbot @Oga_Homesbot', isTelegram: true },
+  { label: '💬 WhatsApp (Soon)', prompt: 'What is the status of the WhatsApp chatbot integration?' },
 ];
 
 export default function AdaChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('tenant');
   const [hasUnread, setHasUnread] = useState(true);
+  const [sessionId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('ada_session_id');
+      if (stored) return stored;
+      const created = 'rb-session-' + Math.random().toString(36).substring(2, 9) + '-' + Date.now();
+      sessionStorage.setItem('ada_session_id', created);
+      return created;
+    }
+    return 'rb-session-default';
+  });
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -84,6 +99,7 @@ export default function AdaChatWidget() {
         body: JSON.stringify({
           messages: history,
           userRole: selectedRole,
+          sessionId: sessionId,
         }),
       });
 
@@ -121,173 +137,192 @@ export default function AdaChatWidget() {
   };
 
   return (
-    <aside aria-label="Ada Virtual Concierge" className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 select-none">
-      {/* 1. FLOATING BUBBLE (TRIGGER) */}
+    <aside aria-label="Ada Virtual Concierge & Multi-Channel Chat" className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-50 select-none">
+      
+      {/* 1. FLOATING ACTION TRIGGER */}
       {!isOpen && (
         <div className="relative group animate-bounce-subtle">
-          {/* Unread notification hint */}
+          {/* Notification bubble */}
           {hasUnread && (
-            <div className="absolute -top-10 right-0 bg-[#2D5A43] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg border border-[#E8DFC8] flex items-center gap-1.5 whitespace-nowrap">
-              <Sparkles className="w-3 h-3 text-[#D97706] animate-pulse" />
-              <span>Ask Ada: ₦0 Fee Houses & Advice</span>
+            <div className="absolute -top-10 right-0 bg-[#0B1B2B] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xl border border-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Ask AI • Telegram (@{TELEGRAM_BOT_USERNAME})</span>
             </div>
           )}
 
           <button
             onClick={() => setIsOpen(true)}
-            aria-label="Open Ada AI Concierge"
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#1E3F2F] text-white p-0.5 shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer border-2 border-[#D97706] relative overflow-hidden">
-            <img
-              src="/images/ada-avatar.jpg"
-              alt="Ada from RentBridge"
-              className="w-full h-full object-cover rounded-full"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-            {/* Fallback Icon if image loading */}
-            <div className="absolute inset-0 bg-[#2D5A43] flex items-center justify-center text-white font-black text-sm">
-              <MessageSquare className="w-6 h-6" />
+            aria-label="Open RentBridge AI Concierge"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#0B1B2B] text-white p-0.5 shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center cursor-pointer border-2 border-[#0088cc] relative overflow-hidden group">
+            
+            {/* Robot/Bot Avatar Circle */}
+            <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#0088cc] to-[#2D5A43] flex items-center justify-center text-white relative">
+              <svg className="w-7 h-7 fill-white" viewBox="0 0 24 24">
+                <path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h2a5 5 0 015 5v1h1a2 2 0 012 2v3a2 2 0 01-2 2h-1v1a5 5 0 01-5 5H9a5 5 0 01-5-5v-1H3a2 2 0 01-2-2v-3a2 2 0 012-2h1v-1a5 5 0 015-5h2V5.72A2 2 0 0110 4a2 2 0 012-2zm-3 9a2 2 0 100 4 2 2 0 000-4zm6 0a2 2 0 100 4 2 2 0 000-4z"/>
+              </svg>
             </div>
 
-            {/* Pulse Status Indicator */}
-            <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full shadow-xs"></span>
+            {/* Online Pulse Indicator */}
+            <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-[#0B1B2B] rounded-full shadow-xs"></span>
           </button>
         </div>
       )}
 
-      {/* 2. CHAT DRAWER */}
+      {/* 2. CHAT DRAWER (HOUSES BOTH WEB CHATBOT & TELEGRAM DIRECT CHANNEL) */}
       {isOpen && (
-        <div className="w-[92vw] sm:w-[420px] h-[580px] max-h-[85vh] bg-[#FBF9F5] rounded-3xl shadow-2xl border border-[#E2D7C8] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className={`w-[94vw] sm:w-[400px] ${isExpanded ? 'sm:w-[500px] h-[640px]' : 'h-[580px]'} max-h-[88vh] bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-300 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200`}>
           
-          {/* Header */}
-          <div className="p-4 bg-[#1E3F2F] text-white flex items-center justify-between shadow-sm shrink-0">
+          {/* Top Header Bar (Matching Reference Screenshot) */}
+          <div className="px-4 py-3 bg-[#0B1B2B] text-white flex items-center justify-between shadow-xs shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-2 border-[#D97706] overflow-hidden shrink-0 relative bg-[#2D5A43]">
-                <img
-                  src="/images/ada-avatar.jpg"
-                  alt="Ada"
-                  className="w-full h-full object-cover"
-                />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-white"></span>
+              {/* Avatar with status dot */}
+              <div className="w-10 h-10 rounded-full bg-[#0088cc] flex items-center justify-center text-white shrink-0 relative shadow-sm">
+                <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
+                  <path d="M12 2a2 2 0 012 2c0 .74-.4 1.38-1 1.72V7h2a5 5 0 015 5v1h1a2 2 0 012 2v3a2 2 0 01-2 2h-1v1a5 5 0 01-5 5H9a5 5 0 01-5-5v-1H3a2 2 0 01-2-2v-3a2 2 0 012-2h1v-1a5 5 0 015-5h2V5.72A2 2 0 0110 4a2 2 0 012-2zm-3 9a2 2 0 100 4 2 2 0 000-4zm6 0a2 2 0 100 4 2 2 0 000-4z"/>
+                </svg>
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0B1B2B]"></span>
               </div>
+
               <div>
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-extrabold text-sm tracking-tight text-white">Ada from RentBridge</h3>
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#D97706]" />
+                <h3 className="font-bold text-sm tracking-tight text-white leading-tight">
+                  Ada • RentBridge AI
+                </h3>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-300 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Online</span>
+                  <span className="text-slate-400">•</span>
+                  <span>Suite A20 Citadel Desk</span>
                 </div>
-                <p className="text-[10px] text-emerald-200 font-medium">AI Housing Concierge & Anti-Agent Shield</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            {/* Header Right Action Buttons */}
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleReset}
-                title="Restart Chat"
-                className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-[#2D5A43] transition-all">
-                <RotateCcw className="w-3.5 h-3.5" />
+                onClick={() => setIsExpanded(!isExpanded)}
+                title={isExpanded ? "Collapse View" : "Expand View"}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white transition-all flex items-center justify-center cursor-pointer">
+                {isExpanded ? (
+                  <Minimize2 className="w-3.5 h-3.5" />
+                ) : (
+                  <ExternalLink className="w-3.5 h-3.5" />
+                )}
               </button>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-1.5 rounded-lg text-emerald-200 hover:text-white hover:bg-[#2D5A43] transition-all">
+                title="Close Concierge"
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white transition-all flex items-center justify-center cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          {/* Role Filter Bar */}
-          <div className="bg-[#EBF2ED] px-3 py-2 border-b border-[#E2D7C8] flex items-center justify-between text-xs">
-            <span className="text-[10px] uppercase font-bold text-[#2D5A43] tracking-wider">I am a:</span>
-            <div className="flex items-center gap-1">
-              {[
-                { id: 'tenant', label: 'Tenant' },
-                { id: 'landlord', label: 'Landlord' },
-                { id: 'caretaker', label: 'Caretaker' },
-                { id: 'lawyer', label: 'Lawyer' },
-              ].map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setSelectedRole(r.id)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold transition-all ${
-                    selectedRole === r.id
-                      ? 'bg-[#2D5A43] text-white shadow-xs'
-                      : 'bg-white/80 text-[#4B524D] hover:bg-white'
-                  }`}>
-                  {r.label}
-                </button>
-              ))}
+          {/* Sub-Header Bar (Direct Channel Bar matching screenshot) */}
+          <div className="px-4 py-2 bg-white border-b border-slate-200 flex items-center justify-between text-xs shrink-0 shadow-xs">
+            <span className="text-slate-600 font-medium text-[11px]">Official Direct Channel</span>
+            
+            <div className="flex items-center gap-2">
+              <a
+                href={TELEGRAM_BOT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 font-bold text-[#0088cc] hover:text-[#006699] hover:underline text-xs transition-colors">
+                <svg className="w-3.5 h-3.5 fill-[#0088cc]" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
+                </svg>
+                <span>Telegram (@{TELEGRAM_BOT_USERNAME})</span>
+              </a>
+
+              <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 hidden xs:inline-block">
+                WhatsApp (Soon)
+              </span>
             </div>
           </div>
 
           {/* Messages Scroll Area */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
+          <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs bg-[#F8FAFC]">
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                 
-                {/* Bubble */}
+                {/* Bubble / Card */}
                 <div
-                  className={`p-3.5 rounded-2xl max-w-[88%] leading-relaxed ${
+                  className={`p-4 rounded-2xl max-w-[94%] leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-[#2D5A43] text-white rounded-br-none shadow-xs'
-                      : 'bg-white text-[#151816] border border-[#E2D7C8] rounded-bl-none shadow-xs'
+                      ? 'bg-[#0B1B2B] text-white rounded-br-xs shadow-xs'
+                      : 'bg-white text-slate-800 border border-slate-200 rounded-bl-xs shadow-xs'
                   }`}>
-                  {/* Markdown formatted content */}
-                  <div className="whitespace-pre-wrap space-y-1.5 font-normal">
+                  
+                  {/* Card Header (for Welcome Message matching screenshot) */}
+                  {msg.headerTitle && (
+                    <div className="mb-3 space-y-1">
+                      <h4 className="font-extrabold text-sm text-slate-900 tracking-tight">
+                        {msg.headerTitle}
+                      </h4>
+                      {msg.headerSub && (
+                        <p className="text-xs font-bold text-[#D97706]">
+                          {msg.headerSub}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Message Paragraphs */}
+                  <div className="whitespace-pre-wrap space-y-2 font-normal text-slate-700 leading-relaxed">
                     {msg.content.split('\n').map((paragraph, idx) => {
                       if (!paragraph.trim()) return <br key={idx} />;
                       return <p key={idx}>{paragraph}</p>;
                     })}
                   </div>
 
-                  {/* Anti-Extortion Warning Banner */}
+                  {/* Anti-Extortion Sentinel Warning */}
                   {msg.action === 'REPORT_EXTORTION' && (
-                    <div className="mt-3 p-3 rounded-xl bg-[#FEF2F2] border border-[#EF4444] text-[#B91C1C] space-y-2">
-                      <div className="flex items-center gap-1.5 font-extrabold text-[11px]">
-                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-300 text-red-700 space-y-2">
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
                         <span>Citadel Anti-Fraud Protocol Triggered</span>
                       </div>
-                      <p className="text-[10px] leading-tight text-[#7F1D1D]">
-                        RentBridge strictly blacklists any telephone number that demands inspection fees.
+                      <p className="text-[11px] leading-tight text-red-600">
+                        Physical inspections are 100% free (₦0.00). Report extortion attempts to freeze this account immediately.
                       </p>
                       <Link
                         href="/dashboard/inspections"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#B91C1C] text-white font-bold text-[10px] hover:bg-[#991B1B] transition-all">
-                        <span>Open Citadel Fraud Desk</span>
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold text-[10px] hover:bg-red-700 transition-all">
+                        <span>Report Extortion Desk</span>
                         <ArrowRight className="w-3 h-3" />
                       </Link>
                     </div>
                   )}
                 </div>
 
-                {/* Optional Property Cards Returned by Ada */}
+                {/* Optional Property Cards Returned by AI */}
                 {msg.properties && msg.properties.length > 0 && (
-                  <div className="mt-2.5 space-y-2 w-full max-w-[90%]">
-                    <p className="text-[10px] font-extrabold text-[#2D5A43] uppercase tracking-wider flex items-center gap-1">
-                      <Home className="w-3 h-3" />
+                  <div className="mt-2.5 space-y-2 w-full max-w-[94%]">
+                    <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                      <Home className="w-3 h-3 text-emerald-600" />
                       <span>Verified Matches on RentBridge:</span>
                     </p>
                     {msg.properties.map((prop) => (
                       <div
                         key={prop.id}
-                        className="p-2.5 rounded-xl bg-white border border-[#E2D7C8] shadow-xs flex items-center gap-3 hover:border-[#2D5A43] transition-all">
+                        className="p-2.5 rounded-xl bg-white border border-slate-200 shadow-xs flex items-center gap-3 hover:border-emerald-600 transition-all">
                         <img
                           src={prop.image || '/images/hero-lagos-duplex.jpg'}
                           alt={prop.title}
                           className="w-14 h-14 rounded-lg object-cover shrink-0"
                         />
                         <div className="overflow-hidden flex-1">
-                          <p className="font-extrabold text-[#151816] truncate text-[11px]">{prop.title}</p>
-                          <p className="text-[10px] text-[#4B524D] flex items-center gap-1 truncate">
-                            <MapPin className="w-2.5 h-2.5 text-[#2D5A43] shrink-0" />
+                          <p className="font-bold text-slate-900 truncate text-[11px]">{prop.title}</p>
+                          <p className="text-[10px] text-slate-500 flex items-center gap-1 truncate">
+                            <MapPin className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
                             <span>{prop.neighborhood}, {prop.cityName}</span>
                           </p>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="font-black text-[#1E3F2F] text-[11px]">
+                            <span className="font-extrabold text-emerald-800 text-[11px]">
                               ₦{Number(prop.priceYearly).toLocaleString()}/yr
                             </span>
-                            <span className="text-[9px] font-extrabold bg-[#EBF2ED] text-[#2D5A43] px-1.5 py-0.2 rounded">
+                            <span className="text-[9px] font-bold bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
                               ₦0 Agent Fee
                             </span>
                           </div>
@@ -300,51 +335,57 @@ export default function AdaChatWidget() {
             ))}
 
             {loading && (
-              <div className="flex items-center gap-2 text-[#4B524D] text-xs">
-                <div className="w-7 h-7 rounded-full bg-[#EBF2ED] flex items-center justify-center border border-[#2D5A43]/20">
-                  <Sparkles className="w-3.5 h-3.5 text-[#2D5A43] animate-spin" />
+              <div className="flex items-center gap-2 text-slate-500 text-xs p-2">
+                <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-[#0088cc] animate-spin" />
                 </div>
-                <span className="italic text-[11px]">Ada is typing & cross-referencing listings...</span>
+                <span className="italic text-[11px]">AI assistant is typing...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Action Suggestion Chips */}
-          <div className="px-3 py-2 bg-white/70 border-t border-[#E8DFC8] overflow-x-auto whitespace-nowrap flex gap-1.5 scrollbar-none">
+          {/* Quick Action Suggestion Chips (Pills Matching Reference Screenshot) */}
+          <div className="px-3 py-2 bg-white border-t border-slate-200 overflow-x-auto whitespace-nowrap flex gap-1.5 scrollbar-none shrink-0">
             {QUICK_PILLS.map((pill, i) => (
               <button
                 key={i}
                 disabled={loading}
-                onClick={() => handleSendMessage(pill.prompt)}
-                className="text-[10px] font-semibold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] px-2.5 py-1 rounded-full border border-[#D7CBBB] transition-all shrink-0">
-                {pill.label}
+                onClick={() => {
+                  if (pill.isTelegram) {
+                    window.open(TELEGRAM_BOT_URL, '_blank');
+                  } else {
+                    handleSendMessage(pill.prompt);
+                  }
+                }}
+                className="text-xs font-semibold bg-[#E8F4FD] hover:bg-[#D4EBF8] text-[#0A66C2] px-3 py-1.5 rounded-full border border-[#CDE5FA] transition-all shrink-0 cursor-pointer flex items-center gap-1">
+                <span>{pill.label}</span>
               </button>
             ))}
           </div>
 
-          {/* Input Footer */}
+          {/* Input Footer (Matching Reference Screenshot) */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage();
             }}
-            className="p-3 bg-white border-t border-[#E2D7C8] flex items-center gap-2 shrink-0">
+            className="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0">
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={`Ask Ada as a ${selectedRole} (e.g. Lekki flood zones, fees)...`}
-              className="flex-1 p-2.5 rounded-xl bg-[#FBF9F5] border border-[#E8DFC8] text-xs focus:outline-none focus:border-[#2D5A43]"
+              placeholder="Ask about houses, inspections, or zero fees..."
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-slate-300 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0088cc] focus:bg-white transition-all"
             />
             <button
               type="submit"
               disabled={!inputValue.trim() || loading}
-              className="p-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center">
+              className="w-10 h-10 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm">
               {loading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8AE0B3]" />
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
               ) : (
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-4 h-4 ml-0.5" />
               )}
             </button>
           </form>
@@ -354,4 +395,3 @@ export default function AdaChatWidget() {
     </aside>
   );
 }
-

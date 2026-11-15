@@ -38,6 +38,24 @@ export default function Footer({ onNavigateToSection, onOpenListModal, onSelectC
                 Report any user requesting viewing fees for immediate blacklisting across all covered regions.
               </p>
             </div>
+
+            {/* AI Chatbots & Channels */}
+            <div className="pt-1 space-y-1.5">
+              <h5 className="text-[11px] font-bold uppercase tracking-wider text-[#8F8372]">AI Concierge & Automated Channels</h5>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="https://t.me/Oga_Homesbot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-[#0088cc]/20 hover:bg-[#0088cc] text-[#38bdf8] hover:text-white border border-[#0088cc]/40 transition-all cursor-pointer"
+                  title="Direct Telegram Chatbot">
+                  <span>✈️ Telegram: @Oga_Homesbot</span>
+                </a>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-white/5 text-[#8F8372] border border-white/10">
+                  <span>💬 WhatsApp: (Space Reserved)</span>
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Supported Cities */}

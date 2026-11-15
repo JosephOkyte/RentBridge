@@ -89,9 +89,10 @@ async function getInventory() {
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { messages = [], userRole = 'tenant' } = body;
+    const { messages = [], userRole = 'tenant', sessionId: clientSessionId } = body;
     const latestUserMsg = messages[messages.length - 1]?.content || '';
     const lower = latestUserMsg.toLowerCase();
+    const sessionId = clientSessionId || `rentbridge-user-${Date.now()}`;
 
     const inventory = await getInventory();
 
@@ -107,7 +108,54 @@ export async function POST(request) {
       });
     }
 
-    // 2. CHECK IF GEMINI API KEY IS CONFIGURED
+    // 2. CONNECT TO LIVE N8N ADA CHAT WEBHOOK
+    const n8nWebhookUrl = process.env.N8N_ADA_CHAT_WEBHOOK_URL;
+    if (n8nWebhookUrl) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second abort resilience
+
+        const n8nRes = await fetch(n8nWebhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chatInput: latestUserMsg,
+            sessionId: sessionId,
+            action: 'sendMessage',
+            userRole: userRole,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (n8nRes.ok) {
+          const n8nData = await n8nRes.json();
+          const replyText = n8nData.output || n8nData.text || n8nData.reply || (typeof n8nData === 'string' ? n8nData : null);
+
+          if (replyText) {
+            // Find matching properties referenced or matching city
+            const matchedProps = inventory.filter((p) =>
+              replyText.toLowerCase().includes(p.title.toLowerCase()) ||
+              lower.includes(p.city) ||
+              lower.includes((p.neighborhood || '').toLowerCase())
+            ).slice(0, 3);
+
+            return NextResponse.json({
+              reply: replyText,
+              properties: matchedProps,
+              source: 'n8n-live-webhook',
+            });
+          }
+        }
+      } catch (n8nErr) {
+        console.warn('[Ada n8n Webhook Warning]:', n8nErr.message);
+        // Seamless fallback to Gemini / Local Engine continues below
+      }
+    }
+
+    // 3. CHECK IF GEMINI API KEY IS CONFIGURED
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
@@ -186,11 +234,15 @@ export async function POST(request) {
       replyText = `**Listing on RentBridge (Direct Landlords, Caretakers & Legal Counsel):**\n\n*Welcome, Chief!* Listing on RentBridge is 100% direct with 0% platform commission taken from your rent.\n\n**Phase 1 Verification Protocol:**\n* Upload **12+ photos** (residential) or **17+ photos** (commercial) showing the tarred access road, compound gate, and interior walkthrough.\n* Submit your proof of custody (Governor's Consent, C of O, or Retained Legal Custody deed).\n* Once verified by our compliance officer, your property goes live with the **Verified Custodian Badge**.\n\nReady to list? Click **[List Property](/dashboard/properties/new)** to start your draft!`;
     } else if (lower.includes('lawyer') || lower.includes('c of o') || lower.includes('deed') || lower.includes('title')) {
       replyText = `**Title Verification & Legal Custody Protocol:**\n\nRentBridge works closely with retained legal counsel and estate administrators. For legal custodians, we verify:\n\n* Certified True Copy (CTC) of Certificate of Occupancy or Registered Deed of Assignment\n* Registered Power of Attorney or Letters of Administration\n* Supreme Court Enrollment Number (SCN) or NBA Practicing Bar Seal\n\nThis guarantees prospective tenants that title custody is clean, litigation-free, and directly authorized.`;
+    } else if (lower.includes('telegram') || lower.includes('oga_homes') || lower.includes('tg bot')) {
+      replyText = `**RentBridge Official Telegram Chatbot (@Oga_Homesbot):**\n\nOur Telegram chatbot is live and active 24/7!\n\n* **Username:** [@Oga_Homesbot](https://t.me/Oga_Homesbot)\n* **Instant Inspections:** Request and view ₦0 gate passes straight from your Telegram app.\n* **Smart Search:** Search verified apartments and commercial spaces in Lagos, Abuja, Port Harcourt, and Enugu.\n\n👉 Click **[Open @Oga_Homesbot on Telegram](https://t.me/Oga_Homesbot)** to start chatting directly in your Telegram app!`;
+    } else if (lower.includes('whatsapp') || lower.includes('wa bot')) {
+      replyText = `**WhatsApp Integration Space:**\n\nThe RentBridge WhatsApp Chatbot integration space has been prepared! Our team is finalizing the Meta Business Cloud API connection.\n\nIn the meantime, you can use:\n1. **Ada Web Concierge** (right here)\n2. **Official Telegram Bot** ([@Oga_Homesbot](https://t.me/Oga_Homesbot))\n\nOnce WhatsApp goes live, you will be able to receive gate pass QR codes and custodian contacts directly on your WhatsApp!`;
     } else if (lower.includes('request') || lower.includes('wanted') || lower.includes('matchboard') || lower.includes('demand') || lower.includes('seeker')) {
       replyText = `**The RentBridge Wanted Seeker Matchboard:**\n\nCan't find your exact house, or tired of searching through agent duplicates?\n\n* **Post Your Housing Demand:** Tell verified landlords your preferred hub (Lekki, Wuse 2, GRA PH, Enugu), target budget, and move-in timeline.\n* **Anti-Agent Privacy Shield:** Your phone number is **100% masked**. Rogue roadside agents cannot harvest your contact.\n* **Direct Landlord Handshake:** Only Phase 1 Verified Landlords and legal custodians can propose matching units with pre-approved ₦0 gate passes!\n\n👉 Click **[Wanted Matchboard](/requests)** to browse live tenant demands or post your own ticket in 60 seconds!`;
     } else {
       matchedProps = inventory.slice(0, 2);
-      replyText = "Hello! I'm Ada from RentBridge... Your personal housing concierge and anti-agent shield..\n\nHow can I help you today?";
+      replyText = "Hi, My name is Ada, the AI assistant. Welcome to RentBridge! How may I assist you today?";
     }
 
     return NextResponse.json({
