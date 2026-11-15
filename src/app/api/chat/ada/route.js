@@ -113,18 +113,21 @@ export async function POST(request) {
     if (n8nWebhookUrl) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second abort resilience
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45-second timeout for multi-turn AI reasoning
 
         const n8nRes = await fetch(n8nWebhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'X-Instance-Id': '4d4454ab1a160976f8a649b7bc30ef8de30092b186cddb5439635bf4e49a2f27',
           },
           body: JSON.stringify({
-            chatInput: latestUserMsg,
-            sessionId: sessionId,
             action: 'sendMessage',
-            userRole: userRole,
+            sessionId: sessionId,
+            chatInput: latestUserMsg,
+            metadata: {
+              role: userRole,
+            },
           }),
           signal: controller.signal,
         });
@@ -148,6 +151,8 @@ export async function POST(request) {
               source: 'n8n-live-webhook',
             });
           }
+        } else {
+          console.warn('[Ada n8n Webhook Error]: status', n8nRes.status);
         }
       } catch (n8nErr) {
         console.warn('[Ada n8n Webhook Warning]:', n8nErr.message);
