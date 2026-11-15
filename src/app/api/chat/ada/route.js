@@ -91,25 +91,10 @@ export async function POST(request) {
     const body = await request.json();
     const { messages = [], userRole = 'tenant', sessionId: clientSessionId } = body;
     const latestUserMsg = messages[messages.length - 1]?.content || '';
-    const lower = latestUserMsg.toLowerCase();
-    const sessionId = clientSessionId || `rentbridge-user-${Date.now()}`;
+    const sessionId = clientSessionId || `rb-session-${Date.now()}`;
 
-    const inventory = await getInventory();
-
-    // 1. EXTORTION ALERT INTERCEPT
-    const extortionKeywords = ['gate pass fee', 'inspection fee', 'fuel money', 'send money before', 'pay to view', 'account number for viewing', '3,000', '5,000', 'registration fee'];
-    const isExtortionFlag = extortionKeywords.some((kw) => lower.includes(kw));
-
-    if (isExtortionFlag) {
-      return NextResponse.json({
-        reply: `⛔ **HOLD IT RIGHT THERE! DO NOT SEND ANY MONEY!**\n\n*Na pure street agent scam be that!* On RentBridge, physical inspections are strictly **100% FREE (₦0.00)** across Lagos, Abuja, Port Harcourt, and Enugu.\n\nNo genuine landlord or verified caretaker on this platform is permitted to demand gate fees, fuel allowance, or registration money.\n\n🚨 **What you should do right now:**\n1. Do not transfer a single kobo.\n2. Go to your **[Inspections Dashboard](/dashboard/inspections)** and click the red **"Report Extortion"** button.\n3. Our Citadel Compliance Desk will immediately freeze the listing and blacklist that telephone number. Your money dey safe with you!`,
-        action: 'REPORT_EXTORTION',
-        properties: [],
-      });
-    }
-
-    // 2. CONNECT TO LIVE N8N ADA CHAT WEBHOOK
-    const n8nWebhookUrl = process.env.N8N_ADA_CHAT_WEBHOOK_URL;
+    // 1. CONNECT TO LIVE N8N ADA CHAT WEBHOOK
+    const n8nWebhookUrl = process.env.N8N_ADA_CHAT_WEBHOOK_URL || 'https://prime-tech-hub.duckdns.org/webhook/d3f23217-8418-4818-8f4f-78b5e96eccf1/chat';
     if (n8nWebhookUrl) {
       try {
         const controller = new AbortController();
@@ -138,16 +123,8 @@ export async function POST(request) {
           const replyText = n8nData.output || n8nData.text || n8nData.reply || (typeof n8nData === 'string' ? n8nData : null);
 
           if (replyText) {
-            // Find matching properties referenced or matching city
-            const matchedProps = inventory.filter((p) =>
-              replyText.toLowerCase().includes(p.title.toLowerCase()) ||
-              lower.includes(p.city) ||
-              lower.includes((p.neighborhood || '').toLowerCase())
-            ).slice(0, 3);
-
             return NextResponse.json({
               reply: replyText,
-              properties: matchedProps,
               source: 'n8n-live-webhook',
             });
           }
@@ -156,14 +133,14 @@ export async function POST(request) {
         }
       } catch (n8nErr) {
         console.warn('[Ada n8n Webhook Warning]:', n8nErr.message);
-        // Seamless fallback to Gemini / Local Engine continues below
       }
     }
 
-    // 3. CHECK IF GEMINI API KEY IS CONFIGURED
+    // 2. CHECK IF GEMINI API KEY IS CONFIGURED (CONVERSATIONAL AI FALLBACK)
     const geminiKey = process.env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
+        const inventory = await getInventory();
         const inventoryContext = inventory.map((p) => 
           `ID: ${p.id} | ${p.title} in ${p.neighborhood}, ${p.cityName} | Rent: ₦${p.priceYearly?.toLocaleString()} | Caution: ₦${p.cautionDeposit?.toLocaleString()} | Service: ₦${p.serviceCharge?.toLocaleString()} | Agent Fee: ₦0 | Custodian: ${p.lister?.name} (${p.lister?.type}) | Features: ${p.features?.join(', ')}`
         ).join('\n');
@@ -199,16 +176,9 @@ export async function POST(request) {
         const generatedText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (generatedText) {
-          // Find matching properties referenced
-          const matchedProps = inventory.filter((p) => 
-            generatedText.toLowerCase().includes(p.title.toLowerCase()) ||
-            lower.includes(p.city) ||
-            lower.includes((p.neighborhood || '').toLowerCase())
-          ).slice(0, 3);
-
           return NextResponse.json({
             reply: generatedText,
-            properties: matchedProps,
+            source: 'gemini-conversational',
           });
         }
       } catch (geminiErr) {
@@ -216,43 +186,10 @@ export async function POST(request) {
       }
     }
 
-    // 3. INTELLIGENT LOCAL NIGERIAN REAL ESTATE ENGINE (FALLBACK / LOCAL DEV)
-    // A. City / Neighborhood Search Intent
-    let matchedProps = [];
-    let replyText = '';
-
-    if (lower.includes('lekki') || lower.includes('ikoyi') || lower.includes('lagos')) {
-      matchedProps = inventory.filter((p) => p.city === 'lagos').slice(0, 3);
-      replyText = `**Lagos Housing Advisory with Ada:**\n\nLooking for a home on the Island or Mainland? Here are genuine, 100% verified listings from direct property owners in Lagos. No street agents, and zero flood surprises:\n\n* **Lekki Phase 1 / Admiralty Way:** We strictly vet compound road access and drainage so you don't face waterlogged compounds in July.\n* **Ikoyi Waterfront:** High-end, 24/7 serviced security and steady power.\n\nCheck out these verified options below with **₦0 agent commission** guaranteed. Click any card to book a 100% free physical inspection!`;
-    } else if (lower.includes('abuja') || lower.includes('wuse') || lower.includes('gwarinpa') || lower.includes('maitama')) {
-      matchedProps = inventory.filter((p) => p.city === 'abuja').slice(0, 3);
-      replyText = `**Abuja Real Estate Advisory with Ada:**\n\nAbuja rental space moves fast, especially around Wuse 2, Maitama, and Gwarinpa. The big advantage on RentBridge? **You deal direct with owners or retained SAN legal custodians** — nobody is adding 10% agent commission or 10% legal fee on top of your rent.\n\nHere are direct Abuja options ready for free physical viewing:`;
-    } else if (lower.includes('port harcourt') || lower.includes('ph') || lower.includes('gra')) {
-      matchedProps = inventory.filter((p) => p.city === 'ph').slice(0, 3);
-      replyText = `**Port Harcourt Direct Housing with Ada:**\n\nLooking for a secure spot in PH (Old GRA, GRA Phase 2, or Peter Odili)? On RentBridge, all Port Harcourt listings feature confirmed perimeter walls, compound gates, and direct contact with verified landlords.\n\nHere are verified PH listings ready for ₦0 viewing fee inspections:`;
-    } else if (lower.includes('enugu') || lower.includes('independence layout')) {
-      matchedProps = inventory.filter((p) => p.city === 'enugu').slice(0, 3);
-      replyText = `**Enugu Real Estate with Ada:**\n\n*Nno nu!* Looking around Independence Layout or New Haven? Our Enugu listings are verified directly with property owners and authorized estate lawyers with zero middleman interference.\n\nHere are available listings in Enugu:`;
-    } else if (lower.includes('how does') || lower.includes('inspection') || lower.includes('viewing') || lower.includes('gate pass')) {
-      replyText = `**How Physical Inspections & Gate Passes Work on RentBridge:**\n\n1. **Browse & Pick a Slot:** Find any verified house in Lagos, Abuja, PH, or Enugu and select your preferred viewing day.\n2. **Direct Custodian Handshake:** The verified owner, caretaker, or lawyer confirms your appointment.\n3. **Official Gate Pass Code:** You instantly receive an official pass code (e.g. \`RB-8492\`) on your dashboard, WhatsApp, and email.\n4. **₦0 Viewing Fee Guaranteed:** Show your pass at the compound gate and inspect the house for free. If anybody asks for transport money or gate fees, report them immediately and we freeze their account!\n\nWould you like me to find properties in your preferred city?`;
-    } else if (lower.includes('list') || lower.includes('landlord') || lower.includes('owner') || lower.includes('caretaker')) {
-      replyText = `**Listing on RentBridge (Direct Landlords, Caretakers & Legal Counsel):**\n\n*Welcome, Chief!* Listing on RentBridge is 100% direct with 0% platform commission taken from your rent.\n\n**Phase 1 Verification Protocol:**\n* Upload **12+ photos** (residential) or **17+ photos** (commercial) showing the tarred access road, compound gate, and interior walkthrough.\n* Submit your proof of custody (Governor's Consent, C of O, or Retained Legal Custody deed).\n* Once verified by our compliance officer, your property goes live with the **Verified Custodian Badge**.\n\nReady to list? Click **[List Property](/dashboard/properties/new)** to start your draft!`;
-    } else if (lower.includes('lawyer') || lower.includes('c of o') || lower.includes('deed') || lower.includes('title')) {
-      replyText = `**Title Verification & Legal Custody Protocol:**\n\nRentBridge works closely with retained legal counsel and estate administrators. For legal custodians, we verify:\n\n* Certified True Copy (CTC) of Certificate of Occupancy or Registered Deed of Assignment\n* Registered Power of Attorney or Letters of Administration\n* Supreme Court Enrollment Number (SCN) or NBA Practicing Bar Seal\n\nThis guarantees prospective tenants that title custody is clean, litigation-free, and directly authorized.`;
-    } else if (lower.includes('telegram') || lower.includes('oga_homes') || lower.includes('tg bot')) {
-      replyText = `**RentBridge Official Telegram Chatbot (@Oga_Homesbot):**\n\nOur Telegram chatbot is live and active 24/7!\n\n* **Username:** [@Oga_Homesbot](https://t.me/Oga_Homesbot)\n* **Instant Inspections:** Request and view ₦0 gate passes straight from your Telegram app.\n* **Smart Search:** Search verified apartments and commercial spaces in Lagos, Abuja, Port Harcourt, and Enugu.\n\n👉 Click **[Open @Oga_Homesbot on Telegram](https://t.me/Oga_Homesbot)** to start chatting directly in your Telegram app!`;
-    } else if (lower.includes('whatsapp') || lower.includes('wa bot')) {
-      replyText = `**WhatsApp Integration Space:**\n\nThe RentBridge WhatsApp Chatbot integration space has been prepared! Our team is finalizing the Meta Business Cloud API connection.\n\nIn the meantime, you can use:\n1. **Ada Web Concierge** (right here)\n2. **Official Telegram Bot** ([@Oga_Homesbot](https://t.me/Oga_Homesbot))\n\nOnce WhatsApp goes live, you will be able to receive gate pass QR codes and custodian contacts directly on your WhatsApp!`;
-    } else if (lower.includes('request') || lower.includes('wanted') || lower.includes('matchboard') || lower.includes('demand') || lower.includes('seeker')) {
-      replyText = `**The RentBridge Wanted Seeker Matchboard:**\n\nCan't find your exact house, or tired of searching through agent duplicates?\n\n* **Post Your Housing Demand:** Tell verified landlords your preferred hub (Lekki, Wuse 2, GRA PH, Enugu), target budget, and move-in timeline.\n* **Anti-Agent Privacy Shield:** Your phone number is **100% masked**. Rogue roadside agents cannot harvest your contact.\n* **Direct Landlord Handshake:** Only Phase 1 Verified Landlords and legal custodians can propose matching units with pre-approved ₦0 gate passes!\n\n👉 Click **[Wanted Matchboard](/requests)** to browse live tenant demands or post your own ticket in 60 seconds!`;
-    } else {
-      matchedProps = inventory.slice(0, 2);
-      replyText = "Hi, My name is Ada, the AI assistant. Welcome to RentBridge! How may I assist you today?";
-    }
-
+    // 3. RESPONSIVE CONVERSATIONAL FALLBACK (NEVER RETURN HARDCODED MARKETING BLOCKS)
     return NextResponse.json({
-      reply: replyText,
-      properties: matchedProps,
+      reply: "I'm right here with you! I experienced a momentary network delay reaching the knowledge engine. Could you please send that again or let me know what kind of apartment you are looking for in Lagos, Abuja, or Port Harcourt?",
+      source: 'conversational-fallback',
     });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

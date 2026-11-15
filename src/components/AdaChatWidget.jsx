@@ -35,18 +35,68 @@ const INITIAL_MESSAGES = [
 ];
 
 const QUICK_PILLS = [
-  { label: '🏠 1. Residential', prompt: 'Show me verified residential flats and duplexes in Lagos, Abuja, and PH with ₦0 viewing fees' },
-  { label: '🏢 2. Commercial', prompt: 'Find commercial plaza spaces or offices in Abuja and Lagos' },
+  { label: '🏠 1. Residential', prompt: 'I am looking for residential apartments to rent in Lagos, Abuja, or Port Harcourt' },
+  { label: '🏢 2. Commercial', prompt: 'I need a commercial office or shop space' },
   { label: '🔨 3. Wanted Board', prompt: 'Tell me about the Wanted Seeker Matchboard and how to post a housing request' },
-  { label: '🎟️ 4. Free Pass', prompt: 'How does the free physical inspection and official gate pass code work?' },
+  { label: '🎟️ 4. Free Pass', prompt: 'How does the free physical inspection and official gate pass code work on RentBridge?' },
   { label: '✈️ Telegram Bot', prompt: 'Tell me about the official Telegram chatbot @Oga_Homesbot', isTelegram: true },
   { label: '💬 WhatsApp (Soon)', prompt: 'What is the status of the WhatsApp chatbot integration?' },
 ];
 
+function renderFormattedText(content) {
+  if (!content) return null;
+  const lines = content.split('\n');
+  return lines.map((line, lineIdx) => {
+    if (!line.trim()) {
+      return <div key={lineIdx} className="h-1.5" />;
+    }
+
+    const regex = /(\[([^\]]+)\]\(([^)]+)\)|\*\*([^*]+)\*\*)/g;
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    let keyCounter = 0;
+
+    while ((match = regex.exec(line)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(line.substring(lastIndex, match.index));
+      }
+      if (match[2] && match[3]) {
+        parts.push(
+          <a
+            key={`l-${lineIdx}-${keyCounter++}`}
+            href={match[3]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#15803D] font-bold underline hover:text-[#166534] transition-colors">
+            {match[2]}
+          </a>
+        );
+      } else if (match[4]) {
+        parts.push(
+          <strong key={`b-${lineIdx}-${keyCounter++}`} className="font-semibold text-[#163324]">
+            {match[4]}
+          </strong>
+        );
+      }
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < line.length) {
+      parts.push(line.substring(lastIndex));
+    }
+
+    return (
+      <p key={lineIdx} className="leading-relaxed">
+        {parts}
+      </p>
+    );
+  });
+}
+
 export default function AdaChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [directN8nMode, setDirectN8nMode] = useState(false);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,13 +110,13 @@ export default function AdaChatWidget() {
       if (!sid) {
         sid = (typeof crypto !== 'undefined' && crypto.randomUUID) 
           ? crypto.randomUUID() 
-          : 'session-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
+          : 'rb-session-' + Math.random().toString(36).substring(2, 11) + '-' + Date.now();
         localStorage.setItem('n8n-chat-session-id', sid);
         sessionStorage.setItem('ada_session_id', sid);
       }
       return sid;
     }
-    return 'session-default';
+    return 'rb-session-default';
   });
   
   const messagesEndRef = useRef(null);
@@ -80,7 +130,7 @@ export default function AdaChatWidget() {
       scrollToBottom();
       setHasUnread(false);
     }
-  }, [isOpen, messages, directN8nMode]);
+  }, [isOpen, messages]);
 
   const handleSendMessage = async (customPrompt) => {
     const textToSend = customPrompt || inputValue;
@@ -96,49 +146,84 @@ export default function AdaChatWidget() {
     setInputValue('');
     setLoading(true);
 
+    let replyText = null;
+
+    // 1. Direct browser fetch to live n8n webhook (CORS enabled on prime-tech-hub Caddy)
     try {
-      const history = [...messages, userMessage].map((m) => ({
-        role: m.role === 'ada' ? 'assistant' : 'user',
-        content: m.content,
-      }));
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 40000);
 
-      const res = await fetch('/api/chat/ada', {
+      const n8nRes = await fetch(N8N_DIRECT_CHAT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          messages: history,
-          userRole: selectedRole,
+          action: 'sendMessage',
           sessionId: sessionId,
+          chatInput: textToSend.trim(),
+          metadata: {
+            role: selectedRole,
+          },
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to reach Ada');
+      if (n8nRes.ok) {
+        const n8nData = await n8nRes.json();
+        replyText = n8nData.output || n8nData.text || n8nData.reply || (typeof n8nData === 'string' ? n8nData : null);
       }
+    } catch (directErr) {
+      console.warn('[Ada Widget] Direct n8n fetch skipped, trying server proxy:', directErr.message);
+    }
 
+    // 2. Fallback to local server proxy if direct call didn't yield a reply
+    if (!replyText) {
+      try {
+        const history = [...messages, userMessage].map((m) => ({
+          role: m.role === 'ada' ? 'assistant' : 'user',
+          content: m.content,
+        }));
+
+        const res = await fetch('/api/chat/ada', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: history,
+            userRole: selectedRole,
+            sessionId: sessionId,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          replyText = data.reply;
+        }
+      } catch (proxyErr) {
+        console.warn('[Ada Widget] Server proxy error:', proxyErr.message);
+      }
+    }
+
+    if (replyText) {
       const adaResponse = {
         id: `ada-${Date.now()}`,
         role: 'ada',
-        content: data.reply || "I dey here with you! Let me check that for you.",
-        properties: data.properties || [],
-        action: data.action,
+        content: replyText,
       };
-
       setMessages((prev) => [...prev, adaResponse]);
-    } catch (err) {
+    } else {
       setMessages((prev) => [
         ...prev,
         {
           id: `ada-err-${Date.now()}`,
           role: 'ada',
-          content: `Ehya! Network glitch occurred while checking the database. Please try again or ask me about any property in Lagos, Abuja, PH, or Enugu.`,
-          properties: [],
+          content: "I'm having a brief connection delay reaching our n8n AI engine. Please give it a few seconds and send your message again, or feel free to message us directly on Telegram (@Oga_Homesbot)!",
         },
       ]);
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   };
 
   const handleReset = () => {
@@ -177,7 +262,7 @@ export default function AdaChatWidget() {
         </div>
       )}
 
-      {/* 2. CHAT DRAWER (HOUSES BOTH WEB CHATBOT & TELEGRAM DIRECT CHANNEL IN N8N THEME) */}
+      {/* 2. CHAT DRAWER (HOUSES BOTH LIVE CHATBOT & TELEGRAM DIRECT CHANNEL IN N8N THEME) */}
       {isOpen && (
         <div className={`w-[94vw] sm:w-[410px] ${isExpanded ? 'sm:w-[520px] h-[660px]' : 'h-[600px]'} max-h-[88vh] bg-[#F7FCF8] rounded-2xl sm:rounded-3xl shadow-2xl border border-[#DCEBDF] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200`}>
           
@@ -208,17 +293,6 @@ export default function AdaChatWidget() {
             {/* Header Right Action Buttons */}
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setDirectN8nMode(!directN8nMode)}
-                title={directN8nMode ? "Switch to Smart RentBridge View" : "Switch to Direct n8n View"}
-                className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer border ${
-                  directN8nMode 
-                    ? 'bg-white text-[#15803D] border-white' 
-                    : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
-                }`}>
-                {directN8nMode ? "Smart View" : "Direct n8n"}
-              </button>
-
-              <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 title={isExpanded ? "Collapse View" : "Expand View"}
                 className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all flex items-center justify-center cursor-pointer">
@@ -238,7 +312,7 @@ export default function AdaChatWidget() {
             </div>
           </div>
 
-          {/* Sub-Header Bar (Direct Channel Bar matching screenshot) */}
+          {/* Sub-Header Bar (Direct Channel Bar housing Telegram direct channel) */}
           <div className="px-4 py-2 bg-white border-b border-[#DCEBDF] flex items-center justify-between text-xs shrink-0 shadow-xs">
             <span className="text-[#163324]/70 font-semibold text-[11px]">Official Direct Channel</span>
             
@@ -260,156 +334,84 @@ export default function AdaChatWidget() {
             </div>
           </div>
 
-          {/* VIEW OPTION A: DIRECT N8N EMBEDDED IFRAME */}
-          {directN8nMode ? (
-            <div className="w-full flex-1 relative bg-[#F7FCF8]">
-              <iframe
-                src={N8N_DIRECT_CHAT_URL}
-                title="n8n Live Chatbot"
-                className="w-full h-full border-0"
-              />
-            </div>
-          ) : (
-            /* VIEW OPTION B: NATIVE CHAT WITH N8N PALETTE & SMART PROPERTY CARDS */
-            <>
-              {/* Messages Scroll Area */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs bg-[#F7FCF8]">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    
-                    {/* Bubble (Using exact n8n user & bot colors) */}
-                    <div
-                      className={`p-3.5 sm:p-4 rounded-2xl max-w-[92%] leading-relaxed ${
-                        msg.role === 'user'
-                          ? 'bg-[#DCFCE7] text-[#14532D] border border-[#BBE7C8] rounded-br-xs shadow-xs'
-                          : 'bg-white text-[#163324] border border-[#E4EFE6] rounded-bl-xs shadow-xs'
-                      }`}>
+          {/* CHAT MESSAGES SCROLL AREA (Using n8n Palette & Typography) */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs bg-[#F7FCF8]">
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                
+                {/* Bubble (Using exact n8n user & bot colors) */}
+                <div
+                  className={`p-3.5 sm:p-4 rounded-2xl max-w-[92%] leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-[#DCFCE7] text-[#14532D] border border-[#BBE7C8] rounded-br-xs shadow-xs'
+                      : 'bg-white text-[#163324] border border-[#E4EFE6] rounded-bl-xs shadow-xs'
+                  }`}>
 
-                      {/* Message Paragraphs */}
-                      <div className="whitespace-pre-wrap space-y-1.5 font-normal leading-relaxed">
-                        {msg.content.split('\n').map((paragraph, idx) => {
-                          if (!paragraph.trim()) return <br key={idx} />;
-                          return <p key={idx}>{paragraph}</p>;
-                        })}
-                      </div>
-
-                      {/* Anti-Extortion Warning Banner */}
-                      {msg.action === 'REPORT_EXTORTION' && (
-                        <div className="mt-3 p-3 rounded-xl bg-red-50 border border-red-300 text-red-700 space-y-2">
-                          <div className="flex items-center gap-1.5 font-bold text-xs">
-                            <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
-                            <span>Citadel Anti-Fraud Protocol Triggered</span>
-                          </div>
-                          <p className="text-[11px] leading-tight text-red-600">
-                            Physical inspections are 100% free (₦0.00). Report extortion attempts to freeze this account immediately.
-                          </p>
-                          <Link
-                            href="/dashboard/inspections"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold text-[10px] hover:bg-red-700 transition-all">
-                            <span>Report Extortion Desk</span>
-                            <ArrowRight className="w-3 h-3" />
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Optional Property Cards Returned by AI */}
-                    {msg.properties && msg.properties.length > 0 && (
-                      <div className="mt-2.5 space-y-2 w-full max-w-[92%]">
-                        <p className="text-[10px] font-bold text-[#15803D] uppercase tracking-wider flex items-center gap-1">
-                          <Home className="w-3 h-3 text-[#15803D]" />
-                          <span>Verified Matches on RentBridge:</span>
-                        </p>
-                        {msg.properties.map((prop) => (
-                          <div
-                            key={prop.id}
-                            className="p-2.5 rounded-xl bg-white border border-[#DCEBDF] shadow-xs flex items-center gap-3 hover:border-[#15803D] transition-all">
-                            <img
-                              src={prop.image || '/images/hero-lagos-duplex.jpg'}
-                              alt={prop.title}
-                              className="w-14 h-14 rounded-lg object-cover shrink-0"
-                            />
-                            <div className="overflow-hidden flex-1">
-                              <p className="font-bold text-[#163324] truncate text-[11px]">{prop.title}</p>
-                              <p className="text-[10px] text-[#4B524D] flex items-center gap-1 truncate">
-                                <MapPin className="w-2.5 h-2.5 text-[#15803D] shrink-0" />
-                                <span>{prop.neighborhood}, {prop.cityName}</span>
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="font-extrabold text-[#15803D] text-[11px]">
-                                  ₦{Number(prop.priceYearly).toLocaleString()}/yr
-                                </span>
-                                <span className="text-[9px] font-bold bg-[#E8F3EB] text-[#15803D] px-1.5 py-0.2 rounded border border-[#BBE7C8]">
-                                  ₦0 Agent Fee
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  {/* Message Paragraphs with Clickable Markdown Links and Bold Highlights */}
+                  <div className="space-y-1.5 font-normal leading-relaxed text-xs">
+                    {renderFormattedText(msg.content)}
                   </div>
-                ))}
-
-                {loading && (
-                  <div className="flex items-center gap-2 text-[#15803D] text-xs p-2">
-                    <div className="w-6 h-6 rounded-full bg-[#E8F3EB] flex items-center justify-center border border-[#BBE7C8]">
-                      <Sparkles className="w-3.5 h-3.5 text-[#15803D] animate-spin" />
-                    </div>
-                    <span className="italic text-[11px] font-medium">Ada is typing from n8n knowledge engine...</span>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
+                </div>
               </div>
+            ))}
 
-              {/* Quick Action Suggestion Chips (Styled in n8n light green) */}
-              <div className="px-3 py-2 bg-white border-t border-[#DCEBDF] overflow-x-auto whitespace-nowrap flex gap-1.5 scrollbar-none shrink-0">
-                {QUICK_PILLS.map((pill, i) => (
-                  <button
-                    key={i}
-                    disabled={loading}
-                    onClick={() => {
-                      if (pill.isTelegram) {
-                        window.open(TELEGRAM_BOT_URL, '_blank');
-                      } else {
-                        handleSendMessage(pill.prompt);
-                      }
-                    }}
-                    className="text-xs font-semibold bg-[#E8F3EB] hover:bg-[#DCFCE7] text-[#15803D] px-3 py-1.5 rounded-full border border-[#BBE7C8] transition-all shrink-0 cursor-pointer flex items-center gap-1">
-                    <span>{pill.label}</span>
-                  </button>
-                ))}
+            {loading && (
+              <div className="flex items-center gap-2 text-[#15803D] text-xs p-2">
+                <div className="w-6 h-6 rounded-full bg-[#E8F3EB] flex items-center justify-center border border-[#BBE7C8]">
+                  <Sparkles className="w-3.5 h-3.5 text-[#15803D] animate-spin" />
+                </div>
+                <span className="italic text-[11px] font-medium">Ada is typing from n8n knowledge engine...</span>
               </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
 
-              {/* Input Footer (Using n8n #15803D Send Button) */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendMessage();
+          {/* Quick Action Suggestion Chips (Styled in n8n light green) */}
+          <div className="px-3 py-2 bg-white border-t border-[#DCEBDF] overflow-x-auto whitespace-nowrap flex gap-1.5 scrollbar-none shrink-0">
+            {QUICK_PILLS.map((pill, i) => (
+              <button
+                key={i}
+                disabled={loading}
+                onClick={() => {
+                  if (pill.isTelegram) {
+                    window.open(TELEGRAM_BOT_URL, '_blank');
+                  } else {
+                    handleSendMessage(pill.prompt);
+                  }
                 }}
-                className="p-3 bg-white border-t border-[#DCEBDF] flex items-center gap-2 shrink-0">
-                <input
-                  type="text"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Ask about houses, inspections, or zero fees..."
-                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#F7FCF8] border border-[#DCEBDF] text-xs text-[#163324] placeholder-slate-400 focus:outline-none focus:border-[#15803D] focus:bg-white transition-all"
-                />
-                <button
-                  type="submit"
-                  disabled={!inputValue.trim() || loading}
-                  className="w-10 h-10 rounded-xl bg-[#15803D] hover:bg-[#166534] text-white disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm">
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  ) : (
-                    <Send className="w-4 h-4 ml-0.5" />
-                  )}
-                </button>
-              </form>
-            </>
-          )}
+                className="text-xs font-semibold bg-[#E8F3EB] hover:bg-[#DCFCE7] text-[#15803D] px-3 py-1.5 rounded-full border border-[#BBE7C8] transition-all shrink-0 cursor-pointer flex items-center gap-1">
+                <span>{pill.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Input Footer (Using n8n #15803D Send Button) */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendMessage();
+            }}
+            className="p-3 bg-white border-t border-[#DCEBDF] flex items-center gap-2 shrink-0">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Ask about houses, inspections, or zero fees..."
+              className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#F7FCF8] border border-[#DCEBDF] text-xs text-[#163324] placeholder-slate-400 focus:outline-none focus:border-[#15803D] focus:bg-white transition-all"
+            />
+            <button
+              type="submit"
+              disabled={!inputValue.trim() || loading}
+              className="w-10 h-10 rounded-xl bg-[#15803D] hover:bg-[#166534] text-white disabled:opacity-40 transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm">
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : (
+                <Send className="w-4 h-4 ml-0.5" />
+              )}
+            </button>
+          </form>
 
         </div>
       )}
