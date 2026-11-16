@@ -28,7 +28,8 @@ import {
   Check,
   Loader2,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Database
 } from 'lucide-react';
 import EmptyState from '../../../components/EmptyState';
 
@@ -165,6 +166,13 @@ export default function AdminDashboardPage() {
 
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <Link
+              href="/dashboard/admin/database"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/40 text-xs sm:text-sm font-bold shadow-md transition-all">
+              <Database className="w-4 h-4 text-emerald-400" />
+              <span>Onboarding Intake Database</span>
+            </Link>
+
+            <Link
               href="/admin/verification"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs sm:text-sm font-bold shadow-md transition-all">
               <ShieldCheck className="w-4 h-4" />
@@ -246,9 +254,30 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* The 3 Core Operational Desks */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Desk 1: Verification */}
+      {/* The 4 Core Operational Desks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Desk 1: Intake Database */}
+        <Link
+          href="/dashboard/admin/database"
+          className="p-6 rounded-3xl bg-white border border-[#E8DFC8] hover:border-[#2D5A43] hover:shadow-md transition-all group flex flex-col justify-between space-y-4">
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#EBF2ED] text-[#2D5A43] flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Database className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-black text-[#151816] group-hover:text-[#2D5A43] transition-colors">
+              Onboarded Intake Database
+            </h3>
+            <p className="text-xs text-[#4B524D] leading-relaxed">
+              Live Google Sheets ingestion: monitor Landlords, Caretakers, Lawyers, and Tenants with 1-click call outreach.
+            </p>
+          </div>
+          <div className="flex items-center justify-between text-xs font-bold text-[#2D5A43] pt-2 border-t border-[#E8DFC8]">
+            <span>Open Database Desk</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
+
+        {/* Desk 2: Verification */}
         <Link
           href="/admin/verification"
           className="p-6 rounded-3xl bg-white border border-[#E8DFC8] hover:border-[#2D5A43] hover:shadow-md transition-all group flex flex-col justify-between space-y-4">
@@ -269,7 +298,7 @@ export default function AdminDashboardPage() {
           </div>
         </Link>
 
-        {/* Desk 2: Stealth Monitoring */}
+        {/* Desk 3: Stealth Monitoring */}
         <Link
           href="/admin/accounts"
           className="p-6 rounded-3xl bg-white border border-[#E8DFC8] hover:border-[#2D5A43] hover:shadow-md transition-all group flex flex-col justify-between space-y-4">
@@ -290,7 +319,7 @@ export default function AdminDashboardPage() {
           </div>
         </Link>
 
-        {/* Desk 3: Anti-Fraud */}
+        {/* Desk 4: Anti-Fraud */}
         <Link
           href="/admin/fraud"
           className="p-6 rounded-3xl bg-white border border-[#E8DFC8] hover:border-[#2D5A43] hover:shadow-md transition-all group flex flex-col justify-between space-y-4">
