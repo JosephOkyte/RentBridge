@@ -7,22 +7,13 @@ import { useUser } from '@clerk/nextjs';
 import { 
   Building2, 
   ShieldCheck, 
-  CheckCircle2, 
   ArrowRight, 
   ExternalLink, 
   Sparkles, 
-  Lock, 
-  Loader2, 
-  HelpCircle,
-  LayoutDashboard,
-  Check,
-  RefreshCw,
-  FlaskConical,
-  Radio
+  Loader2
 } from 'lucide-react';
 
-const PROD_FORM_BASE_URL = process.env.NEXT_PUBLIC_N8N_ONBOARDING_FORM_URL || 'https://prime-tech-hub.duckdns.org/form/b40e282e-fe38-483a-84b0-6e120508da81';
-const TEST_FORM_BASE_URL = process.env.NEXT_PUBLIC_N8N_ONBOARDING_TEST_FORM_URL || 'https://prime-tech-hub.duckdns.org/form-test/b40e282e-fe38-483a-84b0-6e120508da81';
+const ONBOARDING_FORM_URL = process.env.NEXT_PUBLIC_N8N_ONBOARDING_FORM_URL || 'https://prime-tech-hub.duckdns.org/form/b40e282e-fe38-483a-84b0-6e120508da81';
 
 function OnboardingContent() {
   const router = useRouter();
@@ -30,16 +21,12 @@ function OnboardingContent() {
   const { user, isLoaded } = useUser();
 
   const queryRole = searchParams?.get('role') || '';
-  const initialMode = searchParams?.get('mode') === 'test' ? 'test' : 'production';
-
-  const [formMode, setFormMode] = useState(initialMode); // 'production' | 'test'
   const [iframeLoading, setIframeLoading] = useState(true);
-  const [targetFormUrl, setTargetFormUrl] = useState(PROD_FORM_BASE_URL);
+  const [targetFormUrl, setTargetFormUrl] = useState(ONBOARDING_FORM_URL);
 
   useEffect(() => {
-    const baseUrl = formMode === 'test' ? TEST_FORM_BASE_URL : PROD_FORM_BASE_URL;
     try {
-      const url = new URL(baseUrl);
+      const url = new URL(ONBOARDING_FORM_URL);
       if (isLoaded && user) {
         url.searchParams.set('userId', user.id || '');
         url.searchParams.set('email', user.primaryEmailAddress?.emailAddress || '');
@@ -50,10 +37,10 @@ function OnboardingContent() {
       }
       setTargetFormUrl(url.toString());
     } catch (e) {
-      setTargetFormUrl(baseUrl);
+      setTargetFormUrl(ONBOARDING_FORM_URL);
     }
     setIframeLoading(true);
-  }, [formMode, isLoaded, user, queryRole]);
+  }, [isLoaded, user, queryRole]);
 
   const handleProceedToDashboard = () => {
     if (queryRole === 'tenant') {
@@ -89,14 +76,10 @@ function OnboardingContent() {
             </div>
           </Link>
 
-          {/* Skip / Return to Dashboard */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handleProceedToDashboard}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all cursor-pointer">
-              <span>Skip to Dashboard</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+          {/* Mandatory Step Indicator */}
+          <div className="flex items-center gap-2 text-xs font-semibold text-[#8F8372]">
+            <ShieldCheck className="w-4 h-4 text-[#2D5A43]" />
+            <span className="hidden sm:inline">Mandatory Account Setup</span>
           </div>
 
         </div>
@@ -172,83 +155,41 @@ function OnboardingContent() {
         {/* Form Container */}
         <div className="bg-white rounded-3xl border border-[#E8DFC8] shadow-sm overflow-hidden relative">
           
-          {/* Top Utility Bar with Environment Switcher & Fullscreen Action */}
-          <div className="px-5 py-3.5 bg-[#F5EFEB] border-b border-[#E8DFC8] flex flex-wrap items-center justify-between gap-3 text-xs text-[#4B524D]">
+          {/* Top Utility Bar */}
+          <div className="px-5 py-3.5 bg-[#F5EFEB] border-b border-[#E8DFC8] flex items-center justify-between text-xs text-[#4B524D]">
             <div className="flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5 text-[#2D5A43]" />
-              <span className="font-semibold">Secure n8n Data Ingestion Gateway</span>
+              <Building2 className="w-4 h-4 text-[#2D5A43]" />
+              <span className="font-bold text-[#1E3F2F] tracking-tight text-xs sm:text-sm">RentBridge Onboarding Form</span>
             </div>
 
-            {/* Mode Switcher (Production vs Test) */}
-            <div className="flex items-center gap-2">
-              <div className="inline-flex rounded-xl bg-white p-0.5 border border-[#D7CBBB] shadow-xs">
-                <button
-                  type="button"
-                  onClick={() => setFormMode('production')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    formMode === 'production'
-                      ? 'bg-[#2D5A43] text-white shadow-xs'
-                      : 'text-[#4B524D] hover:text-[#151816]'
-                  }`}>
-                  <Radio className="w-3 h-3" />
-                  <span>Production Form (Active)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormMode('test')}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    formMode === 'test'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : 'text-[#4B524D] hover:text-[#151816]'
-                  }`}>
-                  <FlaskConical className="w-3 h-3" />
-                  <span>Test Form (Editor Mode)</span>
-                </button>
-              </div>
-
-              <a
-                href={targetFormUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#D7CBBB] font-bold text-[#2D5A43] hover:bg-[#EBF2ED] transition-all">
-                <span>Open in Full Page</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
+            <a
+              href={targetFormUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-[#D7CBBB] font-bold text-[#2D5A43] hover:bg-[#EBF2ED] transition-all text-xs shadow-xs">
+              <span>Open in Full Page</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
-
-          {/* Test Form Alert Note if in Test Mode */}
-          {formMode === 'test' && (
-            <div className="px-5 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs flex items-center justify-between">
-              <span>
-                <strong>Test Mode Active:</strong> Ensure the n8n workflow is in test mode or "Listen for test event" is active. Otherwise, switch to Production Form.
-              </span>
-              <button
-                onClick={() => setFormMode('production')}
-                className="font-bold underline text-amber-900 hover:text-amber-950 ml-2">
-                Switch to Production
-              </button>
-            </div>
-          )}
 
           {/* Iframe Loading Spinner */}
           {iframeLoading && (
             <div className="h-96 flex flex-col items-center justify-center space-y-3 bg-[#FBF9F5]">
               <Loader2 className="w-8 h-8 animate-spin text-[#2D5A43]" />
-              <p className="text-xs font-bold text-[#8F8372]">Connecting to n8n Intake Form...</p>
+              <p className="text-xs font-bold text-[#8F8372]">Loading Onboarding Form...</p>
             </div>
           )}
 
-          {/* n8n Form Iframe with proper permissions */}
+          {/* Onboarding Form Iframe */}
           <div className={`w-full transition-opacity duration-300 ${iframeLoading ? 'hidden' : 'block'}`}>
             <iframe
               key={targetFormUrl}
               src={targetFormUrl}
-              title="RentBridge User Onboarding & Data Collection"
+              title="RentBridge Onboarding Form"
               onLoad={() => setIframeLoading(false)}
               sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation"
               allow="clipboard-write"
-              className="w-full min-h-[720px] sm:min-h-[800px] border-0"
+              className="w-full min-h-[720px] sm:min-h-[820px] border-0"
             />
           </div>
 
