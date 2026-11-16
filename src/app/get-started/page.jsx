@@ -145,12 +145,8 @@ function GetStartedContent() {
           throw new Error(data.error || 'Failed to assign role.');
         }
 
-        // 4. Success Confirmation Flow
-        if (roleId === 'tenant') {
-          router.replace('/dashboard/tenant');
-        } else {
-          router.replace('/dashboard/landlord');
-        }
+        // 4. Success Confirmation Flow -> Route to n8n intake onboarding form before dashboard
+        router.replace(`/onboarding?role=${roleId}`);
         return;
       } catch (err) {
         setErrorMsg(err.message || 'Failed to initialize session. Please retry.');

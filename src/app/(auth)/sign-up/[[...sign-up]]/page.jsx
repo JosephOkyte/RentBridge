@@ -56,8 +56,8 @@ export default async function SignUpPage({ searchParams }) {
 
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-[#E8DFC8] p-4 flex justify-center">
         <SignUp
-          fallbackRedirectUrl="/dashboard"
-          forceRedirectUrl="/dashboard"
+          fallbackRedirectUrl={role ? `/onboarding?role=${role}` : '/onboarding'}
+          forceRedirectUrl={role ? `/onboarding?role=${role}` : '/onboarding'}
           unsafeMetadata={role ? { role } : undefined}
           appearance={{
             elements: {

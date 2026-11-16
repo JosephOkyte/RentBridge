@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { 
   Building2, 
@@ -14,30 +14,56 @@ import {
   Lock, 
   Loader2, 
   HelpCircle,
-  LayoutDashboard
+  LayoutDashboard,
+  Check,
+  RefreshCw,
+  FlaskConical,
+  Radio
 } from 'lucide-react';
 
-const DEFAULT_N8N_FORM_URL = process.env.NEXT_PUBLIC_N8N_ONBOARDING_FORM_URL || 'https://prime-tech-hub.duckdns.org/form-test/b40e282e-fe38-483a-84b0-6e120508da81';
+const PROD_FORM_BASE_URL = process.env.NEXT_PUBLIC_N8N_ONBOARDING_FORM_URL || 'https://prime-tech-hub.duckdns.org/form/b40e282e-fe38-483a-84b0-6e120508da81';
+const TEST_FORM_BASE_URL = process.env.NEXT_PUBLIC_N8N_ONBOARDING_TEST_FORM_URL || 'https://prime-tech-hub.duckdns.org/form-test/b40e282e-fe38-483a-84b0-6e120508da81';
 
-export default function OnboardingPage() {
+function OnboardingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isLoaded } = useUser();
+
+  const queryRole = searchParams?.get('role') || '';
+  const initialMode = searchParams?.get('mode') === 'test' ? 'test' : 'production';
+
+  const [formMode, setFormMode] = useState(initialMode); // 'production' | 'test'
   const [iframeLoading, setIframeLoading] = useState(true);
-  const [targetFormUrl, setTargetFormUrl] = useState(DEFAULT_N8N_FORM_URL);
+  const [targetFormUrl, setTargetFormUrl] = useState(PROD_FORM_BASE_URL);
 
   useEffect(() => {
-    if (isLoaded && user) {
-      try {
-        const url = new URL(DEFAULT_N8N_FORM_URL);
+    const baseUrl = formMode === 'test' ? TEST_FORM_BASE_URL : PROD_FORM_BASE_URL;
+    try {
+      const url = new URL(baseUrl);
+      if (isLoaded && user) {
         url.searchParams.set('userId', user.id || '');
         url.searchParams.set('email', user.primaryEmailAddress?.emailAddress || '');
         url.searchParams.set('name', user.fullName || user.firstName || '');
-        setTargetFormUrl(url.toString());
-      } catch (e) {
-        setTargetFormUrl(DEFAULT_N8N_FORM_URL);
       }
+      if (queryRole) {
+        url.searchParams.set('role', queryRole);
+      }
+      setTargetFormUrl(url.toString());
+    } catch (e) {
+      setTargetFormUrl(baseUrl);
     }
-  }, [isLoaded, user]);
+    setIframeLoading(true);
+  }, [formMode, isLoaded, user, queryRole]);
+
+  const handleProceedToDashboard = () => {
+    if (queryRole === 'tenant') {
+      router.push('/dashboard/tenant');
+    } else if (['landlord', 'caretaker', 'lawyer'].includes(queryRole)) {
+      router.push('/dashboard/landlord');
+    } else {
+      router.push('/dashboard');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FBF9F5] text-[#151816] flex flex-col justify-between">
@@ -66,9 +92,9 @@ export default function OnboardingPage() {
           {/* Skip / Return to Dashboard */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={handleProceedToDashboard}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all cursor-pointer">
-              <span>Go to Dashboard</span>
+              <span>Skip to Dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -146,38 +172,83 @@ export default function OnboardingPage() {
         {/* Form Container */}
         <div className="bg-white rounded-3xl border border-[#E8DFC8] shadow-sm overflow-hidden relative">
           
-          {/* Top Utility Bar */}
-          <div className="px-5 py-3.5 bg-[#F5EFEB] border-b border-[#E8DFC8] flex items-center justify-between text-xs text-[#4B524D]">
+          {/* Top Utility Bar with Environment Switcher & Fullscreen Action */}
+          <div className="px-5 py-3.5 bg-[#F5EFEB] border-b border-[#E8DFC8] flex flex-wrap items-center justify-between gap-3 text-xs text-[#4B524D]">
             <div className="flex items-center gap-2">
               <Lock className="w-3.5 h-3.5 text-[#2D5A43]" />
               <span className="font-semibold">Secure n8n Data Ingestion Gateway</span>
             </div>
 
-            <a
-              href={targetFormUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 font-bold text-[#2D5A43] hover:underline">
-              <span>Open in Full Page</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            {/* Mode Switcher (Production vs Test) */}
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-xl bg-white p-0.5 border border-[#D7CBBB] shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setFormMode('production')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    formMode === 'production'
+                      ? 'bg-[#2D5A43] text-white shadow-xs'
+                      : 'text-[#4B524D] hover:text-[#151816]'
+                  }`}>
+                  <Radio className="w-3 h-3" />
+                  <span>Production Form (Active)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormMode('test')}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    formMode === 'test'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'text-[#4B524D] hover:text-[#151816]'
+                  }`}>
+                  <FlaskConical className="w-3 h-3" />
+                  <span>Test Form (Editor Mode)</span>
+                </button>
+              </div>
+
+              <a
+                href={targetFormUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-[#D7CBBB] font-bold text-[#2D5A43] hover:bg-[#EBF2ED] transition-all">
+                <span>Open in Full Page</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
+
+          {/* Test Form Alert Note if in Test Mode */}
+          {formMode === 'test' && (
+            <div className="px-5 py-2.5 bg-amber-50 border-b border-amber-200 text-amber-900 text-xs flex items-center justify-between">
+              <span>
+                <strong>Test Mode Active:</strong> Ensure the n8n workflow is in test mode or "Listen for test event" is active. Otherwise, switch to Production Form.
+              </span>
+              <button
+                onClick={() => setFormMode('production')}
+                className="font-bold underline text-amber-900 hover:text-amber-950 ml-2">
+                Switch to Production
+              </button>
+            </div>
+          )}
 
           {/* Iframe Loading Spinner */}
           {iframeLoading && (
             <div className="h-96 flex flex-col items-center justify-center space-y-3 bg-[#FBF9F5]">
               <Loader2 className="w-8 h-8 animate-spin text-[#2D5A43]" />
-              <p className="text-xs font-bold text-[#8F8372]">Connecting to Intake Form...</p>
+              <p className="text-xs font-bold text-[#8F8372]">Connecting to n8n Intake Form...</p>
             </div>
           )}
 
-          {/* n8n Form Iframe */}
+          {/* n8n Form Iframe with proper permissions */}
           <div className={`w-full transition-opacity duration-300 ${iframeLoading ? 'hidden' : 'block'}`}>
             <iframe
+              key={targetFormUrl}
               src={targetFormUrl}
               title="RentBridge User Onboarding & Data Collection"
               onLoad={() => setIframeLoading(false)}
-              className="w-full min-h-[680px] sm:min-h-[750px] border-0"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-modals allow-top-navigation-by-user-activation"
+              allow="clipboard-write"
+              className="w-full min-h-[720px] sm:min-h-[800px] border-0"
             />
           </div>
 
@@ -189,8 +260,8 @@ export default function OnboardingPage() {
             </div>
 
             <button
-              onClick={() => router.push('/dashboard')}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white font-extrabold text-xs sm:text-sm tracking-tight shadow-md flex items-center justify-center gap-2 transition-all">
+              onClick={handleProceedToDashboard}
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white font-extrabold text-xs sm:text-sm tracking-tight shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer">
               <span>Finished Form? Proceed to Dashboard</span>
               <ArrowRight className="w-4 h-4" />
             </button>
@@ -206,5 +277,18 @@ export default function OnboardingPage() {
       </footer>
 
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#FBF9F5] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-10 h-10 animate-spin text-[#2D5A43]" />
+        <p className="text-xs font-bold text-[#8F8372]">Loading onboarding portal...</p>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
   );
 }
