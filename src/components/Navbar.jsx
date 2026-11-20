@@ -221,7 +221,7 @@ export default function Navbar({ onOpenListModal, onNavigateToSection }) {
             className="w-full text-left py-3 px-3 rounded-xl text-sm font-bold text-[#1E3F2F] bg-[#E8F8EE] border border-[#8AE0B3]/40 flex items-center justify-between cursor-pointer">
             <span className="flex items-center gap-2.5">
               <WhatsAppIcon className="w-4 h-4 fill-[#25D366]" />
-              <span>WhatsApp Concierge</span>
+              <span>WhatsApp</span>
             </span>
             <span className="text-[10px] font-extrabold bg-[#25D366] text-white px-2 py-0.5 rounded-full">Active 24/7</span>
           </a>

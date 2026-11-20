@@ -38,7 +38,7 @@ const QUICK_PILLS = [
   { label: '🏢 2. Commercial', prompt: 'I need a commercial office or shop space' },
   { label: '🔨 3. Wanted Board', prompt: 'Tell me about the Wanted Seeker Matchboard and how to post a housing request' },
   { label: '🎟️ 4. Free Pass', prompt: 'How does the free physical inspection and official gate pass code work on RentBridge?' },
-  { label: '💬 WhatsApp Concierge', isWhatsApp: true },
+  { label: '💬 WhatsApp', isWhatsApp: true },
 ];
 
 function renderFormattedText(content) {
@@ -216,7 +216,7 @@ export default function AdaChatWidget() {
         {
           id: `ada-err-${Date.now()}`,
           role: 'ada',
-          content: "I'm having a brief connection delay reaching our n8n AI engine. Please give it a few seconds and send your message again, or feel free to message our verified WhatsApp Concierge directly!",
+          content: "I'm having a brief connection delay reaching our n8n AI engine. Please give it a few seconds and send your message again, or feel free to message us on WhatsApp directly!",
         },
       ]);
     }
@@ -239,7 +239,7 @@ export default function AdaChatWidget() {
             <div className="absolute -top-10 right-0 bg-[#15803D] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xl border border-emerald-400 flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-emerald-200 animate-pulse"></span>
               <WhatsAppIcon className="w-3.5 h-3.5 fill-white" />
-              <span>Ask AI • WhatsApp Concierge</span>
+              <span>Ask AI • WhatsApp</span>
             </div>
           )}
 
@@ -322,7 +322,7 @@ export default function AdaChatWidget() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 font-bold text-[#15803D] hover:text-[#166534] hover:underline text-xs transition-colors">
                 <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
-                <span>WhatsApp Concierge</span>
+                <span>WhatsApp</span>
               </a>
 
               <span className="text-[10px] font-bold text-[#15803D] bg-[#E8F3EB] px-2 py-0.5 rounded-full border border-[#BBE7C8] hidden xs:inline-block">
@@ -359,7 +359,7 @@ export default function AdaChatWidget() {
                 <div className="w-6 h-6 rounded-full bg-[#E8F3EB] flex items-center justify-center border border-[#BBE7C8]">
                   <Sparkles className="w-3.5 h-3.5 text-[#15803D] animate-spin" />
                 </div>
-                <span className="italic text-[11px] font-medium">Ada is typing from n8n knowledge engine...</span>
+                <span className="italic text-[11px] font-medium">Ada is typing.......</span>
               </div>
             )}
             <div ref={messagesEndRef} />

@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * RentBridge WhatsApp Concierge Utilities
+ * RentBridge WhatsApp Channel Utilities
  * Centralized configuration - does not reveal raw phone numbers in the UI.
  */
 

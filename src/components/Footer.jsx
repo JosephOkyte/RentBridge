@@ -49,9 +49,9 @@ export default function Footer({ onNavigateToSection, onOpenListModal, onSelectC
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#25D366]/20 hover:bg-[#25D366] text-[#25D366] hover:text-white border border-[#25D366]/40 transition-all cursor-pointer shadow-xs"
-                  title="Official WhatsApp AI Concierge">
+                  title="Official WhatsApp Channel">
                   <WhatsAppIcon className="w-3.5 h-3.5 fill-current" />
-                  <span>WhatsApp Concierge</span>
+                  <span>WhatsApp</span>
                   <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded-full bg-white/20 ml-0.5">Active 24/7</span>
                 </a>
               </div>
