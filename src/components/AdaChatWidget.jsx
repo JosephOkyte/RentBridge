@@ -20,9 +20,8 @@ import {
   Home,
   Loader2
 } from 'lucide-react';
+import { WHATSAPP_DIRECT_URL, WhatsAppIcon } from '../utils/whatsapp';
 
-const TELEGRAM_BOT_URL = process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL || 'https://t.me/Oga_Homesbot';
-const TELEGRAM_BOT_USERNAME = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'Oga_Homesbot';
 const N8N_DIRECT_CHAT_URL = process.env.NEXT_PUBLIC_N8N_ADA_DIRECT_URL || 'https://prime-tech-hub.duckdns.org/webhook/d3f23217-8418-4818-8f4f-78b5e96eccf1/chat';
 
 const INITIAL_MESSAGES = [
@@ -39,8 +38,7 @@ const QUICK_PILLS = [
   { label: '🏢 2. Commercial', prompt: 'I need a commercial office or shop space' },
   { label: '🔨 3. Wanted Board', prompt: 'Tell me about the Wanted Seeker Matchboard and how to post a housing request' },
   { label: '🎟️ 4. Free Pass', prompt: 'How does the free physical inspection and official gate pass code work on RentBridge?' },
-  { label: '✈️ Telegram Bot', prompt: 'Tell me about the official Telegram chatbot @Oga_Homesbot', isTelegram: true },
-  { label: '💬 WhatsApp (Soon)', prompt: 'What is the status of the WhatsApp chatbot integration?' },
+  { label: '💬 WhatsApp Concierge', isWhatsApp: true },
 ];
 
 function renderFormattedText(content) {
@@ -218,7 +216,7 @@ export default function AdaChatWidget() {
         {
           id: `ada-err-${Date.now()}`,
           role: 'ada',
-          content: "I'm having a brief connection delay reaching our n8n AI engine. Please give it a few seconds and send your message again, or feel free to message us directly on Telegram (@Oga_Homesbot)!",
+          content: "I'm having a brief connection delay reaching our n8n AI engine. Please give it a few seconds and send your message again, or feel free to message our verified WhatsApp Concierge directly!",
         },
       ]);
     }
@@ -240,7 +238,8 @@ export default function AdaChatWidget() {
           {hasUnread && (
             <div className="absolute -top-10 right-0 bg-[#15803D] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-xl border border-emerald-400 flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-emerald-200 animate-pulse"></span>
-              <span>Ask AI • Telegram (@{TELEGRAM_BOT_USERNAME})</span>
+              <WhatsAppIcon className="w-3.5 h-3.5 fill-white" />
+              <span>Ask AI • WhatsApp Concierge</span>
             </div>
           )}
 
@@ -262,7 +261,7 @@ export default function AdaChatWidget() {
         </div>
       )}
 
-      {/* 2. CHAT DRAWER (HOUSES BOTH LIVE CHATBOT & TELEGRAM DIRECT CHANNEL IN N8N THEME) */}
+      {/* 2. CHAT DRAWER (HOUSES BOTH LIVE CHATBOT & WHATSAPP DIRECT CHANNEL IN N8N THEME) */}
       {isOpen && (
         <div className={`w-[94vw] sm:w-[410px] ${isExpanded ? 'sm:w-[520px] h-[660px]' : 'h-[600px]'} max-h-[88vh] bg-[#F7FCF8] rounded-2xl sm:rounded-3xl shadow-2xl border border-[#DCEBDF] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200`}>
           
@@ -312,24 +311,22 @@ export default function AdaChatWidget() {
             </div>
           </div>
 
-          {/* Sub-Header Bar (Direct Channel Bar housing Telegram direct channel) */}
+          {/* Sub-Header Bar (Direct Channel Bar housing WhatsApp direct channel) */}
           <div className="px-4 py-2 bg-white border-b border-[#DCEBDF] flex items-center justify-between text-xs shrink-0 shadow-xs">
             <span className="text-[#163324]/70 font-semibold text-[11px]">Official Direct Channel</span>
             
             <div className="flex items-center gap-2">
               <a
-                href={TELEGRAM_BOT_URL}
+                href={WHATSAPP_DIRECT_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 font-bold text-[#15803D] hover:text-[#166534] hover:underline text-xs transition-colors">
-                <svg className="w-3.5 h-3.5 fill-[#15803D]" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
-                </svg>
-                <span>Telegram (@{TELEGRAM_BOT_USERNAME})</span>
+                <WhatsAppIcon className="w-3.5 h-3.5 fill-[#25D366]" />
+                <span>WhatsApp Concierge</span>
               </a>
 
-              <span className="text-[10px] text-[#163324]/60 bg-[#E8F3EB] px-1.5 py-0.5 rounded border border-[#BBE7C8] hidden xs:inline-block font-medium">
-                WhatsApp (Soon)
+              <span className="text-[10px] font-bold text-[#15803D] bg-[#E8F3EB] px-2 py-0.5 rounded-full border border-[#BBE7C8] hidden xs:inline-block">
+                Active 24/7
               </span>
             </div>
           </div>
@@ -375,8 +372,8 @@ export default function AdaChatWidget() {
                 key={i}
                 disabled={loading}
                 onClick={() => {
-                  if (pill.isTelegram) {
-                    window.open(TELEGRAM_BOT_URL, '_blank');
+                  if (pill.isWhatsApp) {
+                    window.open(WHATSAPP_DIRECT_URL, '_blank');
                   } else {
                     handleSendMessage(pill.prompt);
                   }
