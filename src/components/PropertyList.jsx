@@ -5,10 +5,10 @@ import { ShieldCheck, MapPin, BedDouble, Bath, Maximize2, Calendar, Phone, Arrow
 import { CITIES, CATEGORIES, LISTER_TYPES, PROPERTIES } from '../data/properties';
 import { formatNaira, formatNairaCompact } from '../utils/formatters';
 
-export default function PropertyList({ 
-  selectedCity, 
-  setSelectedCity, 
-  selectedCategory, 
+export default function PropertyList({
+  selectedCity,
+  setSelectedCity,
+  selectedCategory,
   setSelectedCategory,
   onSelectProperty,
   onBookInspection
@@ -34,7 +34,7 @@ export default function PropertyList({
   return (
     <section id="properties" className="py-20 bg-[#F5EFEB]/50 border-t border-[#E8DFC8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
@@ -59,7 +59,7 @@ export default function PropertyList({
 
         {/* Filter Navigation Bar (Responsive on Mobile) */}
         <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-[#E8DFC8] shadow-sm mb-8 space-y-4">
-          
+
           {/* Category Tabs */}
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto py-1">
@@ -67,11 +67,10 @@ export default function PropertyList({
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 active:scale-95 cursor-pointer ${
-                    selectedCategory === cat.id
+                  className={`px-3.5 py-2 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 active:scale-95 cursor-pointer ${selectedCategory === cat.id
                       ? 'bg-[#2D5A43] text-white shadow-sm'
                       : 'bg-[#F5EFEB] text-[#3F4641] hover:bg-[#E8DFC8]'
-                  }`}>
+                    }`}>
                   {cat.label}
                 </button>
               ))}
@@ -101,11 +100,10 @@ export default function PropertyList({
                 <button
                   key={lt.id}
                   onClick={() => setSelectedListerType(lt.id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer whitespace-nowrap ${
-                    selectedListerType === lt.id
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 active:scale-95 cursor-pointer whitespace-nowrap ${selectedListerType === lt.id
                       ? 'bg-[#1E3F2F] text-white font-bold'
                       : 'bg-[#FBF9F5] text-[#4B524D] hover:bg-[#E8DFC8]'
-                  }`}>
+                    }`}>
                   {lt.label}
                 </button>
               ))}
@@ -122,15 +120,15 @@ export default function PropertyList({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {sorted.map((property) => {
               // Lister Badge Icon
-              const ListerIcon = 
+              const ListerIcon =
                 property.lister.type === 'landlord' ? UserCheck :
-                property.lister.type === 'caretaker' ? KeyRound : Scale;
+                  property.lister.type === 'caretaker' ? KeyRound : Scale;
 
               return (
                 <div
                   key={property.id}
                   className="bg-white rounded-3xl border border-[#E2D7C8] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
-                  
+
                   {/* Property Image & Badges */}
                   <div className="relative h-60 w-full overflow-hidden bg-gray-100">
                     <img
@@ -160,13 +158,13 @@ export default function PropertyList({
 
                   {/* Card Body */}
                   <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                    
+
                     <div>
                       {/* Property Type Pill & Title */}
                       <span className="text-[11px] font-bold uppercase tracking-wider text-[#8F8372]">
                         {property.propertyKind}
                       </span>
-                      <h3 
+                      <h3
                         onClick={() => onSelectProperty(property)}
                         className="text-lg font-extrabold text-[#151816] hover:text-[#2D5A43] cursor-pointer transition-colors leading-snug mt-0.5 line-clamp-1">
                         {property.title}
@@ -226,13 +224,13 @@ export default function PropertyList({
                     <div className="pt-2 grid grid-cols-2 gap-2">
                       <button
                         onClick={() => onBookInspection(property)}
-                        className="py-2.5 px-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+                        className="py-2.5 px-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer">
                         <span>Free Inspection</span>
                       </button>
 
                       <button
                         onClick={() => onSelectProperty(property)}
-                        className="py-2.5 px-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-1 transition-all border border-[#D7CBBB]">
+                        className="py-2.5 px-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-1 transition-all border border-[#D7CBBB] cursor-pointer">
                         <span>Full Specs</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
@@ -250,7 +248,7 @@ export default function PropertyList({
             <p className="text-xs text-[#4B524D]">Try switching cities or selecting "All Categories".</p>
             <button
               onClick={() => { setSelectedCity('all'); setSelectedCategory('all'); setSelectedListerType('all'); }}
-              className="px-4 py-2 rounded-xl bg-[#2D5A43] text-white text-xs font-bold">
+              className="px-4 py-2 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold cursor-pointer transition-all">
               Reset Filters
             </button>
           </div>

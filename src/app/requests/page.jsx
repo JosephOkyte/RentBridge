@@ -255,7 +255,7 @@ function RequestsContent() {
               </div>
               <button
                 type="submit"
-                className="px-3.5 py-2 rounded-xl bg-[#2D5A43] text-white text-xs font-bold hover:bg-[#1E3F2F]">
+                className="px-3.5 py-2 rounded-xl bg-[#2D5A43] text-white text-xs font-bold hover:bg-[#1E3F2F] cursor-pointer transition-all">
                 Find
               </button>
             </form>
@@ -275,13 +275,17 @@ function RequestsContent() {
             badge="Wanted Board Active"
             title="No Matching Seeker Requests Found"
             description="There are currently no active housing requests matching this specific filter. Be the first tenant to submit your requirements!"
-            primaryActionLabel="Post a Housing Request →"
-            onPrimaryAction={() => setIsPostModalOpen(true)}
-            secondaryActionLabel="Reset All Filters"
-            onSecondaryAction={() => {
-              setSelectedCity('all');
-              setSelectedType('all');
-              setSearchQuery('');
+            primaryAction={{
+              label: "Post a Housing Request →",
+              onClick: () => setIsPostModalOpen(true),
+            }}
+            secondaryAction={{
+              label: "Reset All Filters",
+              onClick: () => {
+                setSelectedCity('all');
+                setSelectedType('all');
+                setSearchQuery('');
+              },
             }}
             securityTip="RentBridge shields tenant phone numbers and guarantees ₦0 viewing fees on every proposal."
           />
@@ -302,7 +306,7 @@ function RequestsContent() {
                     <button
                       onClick={() => handleCopyTicket(req.ticketId)}
                       title="Copy Request Link"
-                      className="p-1.5 rounded-lg text-[#8F8372] hover:text-[#151816] hover:bg-[#F5EFEB] transition-colors">
+                      className="p-1.5 rounded-lg text-[#8F8372] hover:text-[#151816] hover:bg-[#F5EFEB] transition-colors cursor-pointer">
                       {copiedId === req.ticketId ? (
                         <Check className="w-4 h-4 text-[#2D5A43]" />
                       ) : (

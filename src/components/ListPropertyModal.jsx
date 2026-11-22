@@ -275,7 +275,7 @@ export default function ListPropertyModal({ isOpen, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-[#F5EFEB] text-[#151816]">
+            className="p-2 rounded-full hover:bg-[#F5EFEB] text-[#151816] cursor-pointer transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -332,7 +332,7 @@ export default function ListPropertyModal({ isOpen, onClose }) {
 
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold shadow-md">
+              className="px-6 py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-md cursor-pointer transition-all">
               Done & Return
             </button>
           </div>
@@ -588,7 +588,7 @@ export default function ListPropertyModal({ isOpen, onClose }) {
                           <button
                             type="button"
                             onClick={() => handleRemovePhoto(photo.id)}
-                            className="p-1 rounded-full bg-red-600 text-white hover:bg-red-700">
+                            className="p-1 rounded-full bg-red-600 text-white hover:bg-red-700 cursor-pointer transition-colors">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>

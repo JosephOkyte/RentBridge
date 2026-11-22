@@ -215,7 +215,7 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#E2D7C8] hover:text-white hover:bg-white/10 transition-colors">
+            className="p-2 rounded-xl text-[#E2D7C8] hover:text-white hover:bg-white/10 transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -285,7 +285,7 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
                   onClick={handleCopyTicket}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all">
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-[#F5EFEB] hover:bg-[#EAE2D8] text-[#1E3F2F] border border-[#D7CBBB] transition-all cursor-pointer">
                   {copiedLink ? <Check className="w-4 h-4 text-[#2D5A43]" /> : <Share2 className="w-4 h-4 text-[#2D5A43]" />}
                   <span>{copiedLink ? 'Link Copied!' : 'Copy Direct Request Link'}</span>
                 </button>
@@ -294,7 +294,7 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
                   href={`https://wa.me/?text=${encodeURIComponent(`Hello! I just published a verified housing request on RentBridge [${submittedTicket.ticketId}] for ${submittedTicket.propertyTypeLabel} in ${submittedTicket.cityName} (Budget: ${formatNaira(submittedTicket.minBudget)} - ${formatNaira(submittedTicket.maxBudget)}/yr). Verified owners can propose with ₦0 agent fees: ${window.location.origin}/requests`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white shadow-md shadow-[#25D366]/20 transition-all">
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold bg-[#25D366] hover:bg-[#20ba59] text-white shadow-md shadow-[#25D366]/20 transition-all cursor-pointer">
                   <span>Share on WhatsApp</span>
                   <ExternalLink className="w-4 h-4" />
                 </a>
@@ -306,7 +306,7 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
                     setSubmittedTicket(null);
                     onClose();
                   }}
-                  className="text-xs font-bold text-[#8F8372] hover:text-[#151816] underline">
+                  className="text-xs font-bold text-[#8F8372] hover:text-[#151816] underline cursor-pointer">
                   Done & Return to Site
                 </button>
               </div>
@@ -449,7 +449,7 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
                   <button
                     type="button"
                     onClick={handleAddCustomLocation}
-                    className="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#F5EFEB] text-[#1E3F2F] border border-[#D7CBBB] hover:bg-[#EAE2D8]">
+                    className="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#F5EFEB] text-[#1E3F2F] border border-[#D7CBBB] hover:bg-[#EAE2D8] cursor-pointer transition-colors">
                     Add Area
                   </button>
                 </div>

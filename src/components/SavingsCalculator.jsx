@@ -158,7 +158,7 @@ export default function SavingsCalculator({ onExploreProperties }) {
             </p>
             <button
               onClick={onExploreProperties}
-              className="px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center gap-2 shadow-md">
+              className="px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer transition-all">
               <span>Browse Direct Vacancies</span>
               <ArrowRight className="w-4 h-4" />
             </button>

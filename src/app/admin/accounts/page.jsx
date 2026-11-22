@@ -225,7 +225,7 @@ export default function StealthAccountsMonitorPage() {
               </div>
               <button
                 onClick={() => setSelectedAccount(null)}
-                className="p-2 rounded-full hover:bg-[#F5EFEB]">
+                className="p-2 rounded-full hover:bg-[#F5EFEB] cursor-pointer transition-colors">
                 <X className="w-5 h-5 text-[#8F8372]" />
               </button>
             </div>
@@ -293,7 +293,7 @@ export default function StealthAccountsMonitorPage() {
 
             <button
               onClick={() => setSelectedAccount(null)}
-              className="w-full py-2.5 rounded-xl bg-[#2D5A43] text-white text-xs font-bold shadow-sm">
+              className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold shadow-sm cursor-pointer transition-all">
               Close Shadow Inspection
             </button>
           </div>

@@ -280,16 +280,16 @@ export default function MapExplorer({
                 <div className="space-y-2 pt-2">
                   <button
                     onClick={() => onSelectProperty(selectedProperty)}
-                    className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md">
+                    className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all">
                     <Eye className="w-4 h-4" />
                     <span>View Full Vacancy Specs</span>
                   </button>
 
                   <a
-                    href={`https://www.googlNowe.com/maps/search/?api=1&query=${selectedProperty.coordinates[0]},${selectedProperty.coordinates[1]}`}
+                    href={`https://www.google.com/maps/search/?api=1&query=${selectedProperty.coordinates[0]},${selectedProperty.coordinates[1]}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-2 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#D7CBBB]">
+                    className="w-full py-2 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-1.5 border border-[#D7CBBB] cursor-pointer transition-all">
                     <ExternalLink className="w-3.5 h-3.5" />
                     <span>Directions in Google Maps</span>
                   </a>
@@ -307,7 +307,7 @@ export default function MapExplorer({
                 <div className="pt-2">
                   <button
                     onClick={() => setSelectedProperty(filteredProperties[0])}
-                    className="px-4 py-2 rounded-xl bg-[#2D5A43] text-white text-xs font-bold">
+                    className="px-4 py-2 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold cursor-pointer transition-all">
                     Preview Featured Space
                   </button>
                 </div>

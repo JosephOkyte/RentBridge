@@ -190,7 +190,7 @@ export default function PropertyDetailModal({ property, onClose, onBookInspectio
                   href={`https://wa.me/${property.lister.whatsapp}?text=Hello%20${encodeURIComponent(property.lister.name)},%20I%20am%20interested%20in%20inspecting%20the%20${encodeURIComponent(property.title)}%20listed%20on%20RentBridge.`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-2 border border-[#D7CBBB]">
+                  className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-[#F5EFEB] hover:bg-[#E8DFC8] text-[#1E3F2F] text-xs font-bold flex items-center justify-center gap-2 border border-[#D7CBBB] cursor-pointer transition-all">
                   <Phone className="w-4 h-4 text-[#2D5A43]" />
                   <span>Direct WhatsApp ({property.lister.phone})</span>
                 </a>

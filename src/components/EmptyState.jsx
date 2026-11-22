@@ -27,15 +27,39 @@ export default function EmptyState({
   badge = 'Active Platform Ready',
   title = 'No appointments booked yet today',
   description = 'Your verified pipeline is active and awaiting incoming requests. Once tenants schedule viewings, their details and contact logs will appear here.',
-  primaryAction = {
-    label: 'Share Your Booking Link →',
-    href: '/#properties',
-  },
+  primaryAction = null,
   secondaryAction = null,
+  // Direct prop aliases for maximum compatibility across components
+  primaryActionLabel,
+  onPrimaryAction,
+  primaryActionHref,
+  secondaryActionLabel,
+  onSecondaryAction,
+  secondaryActionHref,
   tip = '₦0 viewing fee guarantee active across Lagos, Abuja, Port Harcourt & Enugu.',
+  securityTip = '',
   className = '',
 }) {
   const [copied, setCopied] = useState(false);
+
+  // Normalize resolved primary action
+  const resolvedPrimary = primaryAction || (primaryActionLabel ? {
+    label: primaryActionLabel,
+    onClick: onPrimaryAction,
+    href: primaryActionHref,
+  } : {
+    label: 'Share Your Booking Link →',
+    href: '/#properties',
+  });
+
+  // Normalize resolved secondary action
+  const resolvedSecondary = secondaryAction || (secondaryActionLabel ? {
+    label: secondaryActionLabel,
+    onClick: onSecondaryAction,
+    href: secondaryActionHref,
+  } : null);
+
+  const displayTip = securityTip || tip;
 
   const handleCopyLink = () => {
     if (typeof window !== 'undefined') {
@@ -84,37 +108,37 @@ export default function EmptyState({
 
         {/* Action Button Controls */}
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-          {primaryAction && primaryAction.href ? (
+          {resolvedPrimary && resolvedPrimary.href ? (
             <Link
-              href={primaryAction.href}
+              href={resolvedPrimary.href}
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-              <span>{primaryAction.label}</span>
+              <span>{resolvedPrimary.label}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
-          ) : primaryAction && primaryAction.onClick ? (
+          ) : resolvedPrimary && resolvedPrimary.onClick ? (
             <button
-              onClick={primaryAction.onClick}
+              onClick={resolvedPrimary.onClick}
               type="button"
               className="w-full sm:w-auto px-6 py-3 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs sm:text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer">
-              <span>{primaryAction.label}</span>
+              <span>{resolvedPrimary.label}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : null}
 
           {/* Quick 1-Click Copy Link or Custom Secondary Button */}
-          {secondaryAction ? (
-            secondaryAction.href ? (
+          {resolvedSecondary ? (
+            resolvedSecondary.href ? (
               <Link
-                href={secondaryAction.href}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-[#F5EFEB] border border-[#E8DFC8] text-[#151816] text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2">
-                <span>{secondaryAction.label}</span>
+                href={resolvedSecondary.href}
+                className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-[#F5EFEB] border border-[#E8DFC8] text-[#151816] text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <span>{resolvedSecondary.label}</span>
               </Link>
             ) : (
               <button
-                onClick={secondaryAction.onClick}
+                onClick={resolvedSecondary.onClick}
                 type="button"
                 className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-[#F5EFEB] border border-[#E8DFC8] text-[#151816] text-xs sm:text-sm font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer">
-                <span>{secondaryAction.label}</span>
+                <span>{resolvedSecondary.label}</span>
               </button>
             )
           ) : (
@@ -138,10 +162,10 @@ export default function EmptyState({
         </div>
 
         {/* Reassuring Footer Tip */}
-        {tip && (
+        {displayTip && (
           <p className="text-[11px] text-[#8F8372] pt-2 flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-[#2D5A43] shrink-0" />
-            <span>{tip}</span>
+            <span>{displayTip}</span>
           </p>
         )}
       </div>

@@ -116,7 +116,7 @@ export default function ProposePropertyModal({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#E2D7C8] hover:text-white hover:bg-white/10 transition-colors">
+            className="p-2 rounded-xl text-[#E2D7C8] hover:text-white hover:bg-white/10 transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -156,7 +156,7 @@ export default function ProposePropertyModal({
                   setSubmittedProposal(null);
                   onClose();
                 }}
-                className="w-full py-3 rounded-xl bg-[#2D5A43] text-white font-bold text-xs hover:bg-[#1E3F2F] transition-all">
+                className="w-full py-3 rounded-xl bg-[#2D5A43] text-white font-bold text-xs hover:bg-[#1E3F2F] transition-all cursor-pointer">
                 Close & Return to Matchboard
               </button>
             </div>
