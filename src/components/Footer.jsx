@@ -126,6 +126,11 @@ export default function Footer({ onNavigateToSection, onOpenListModal, onSelectC
                 <Sparkles className="w-3 h-3 text-[#8AE0B3]" />
                 <span>Wanted Seeker Matchboard</span>
               </Link>
+              <Link 
+                href="/privacy" 
+                className="text-left hover:text-white transition-colors text-[#E2D7C8] cursor-pointer">
+                • Privacy Policy & Shield
+              </Link>
             </div>
 
             <div className="pt-3">
@@ -142,7 +147,12 @@ export default function Footer({ onNavigateToSection, onOpenListModal, onSelectC
         {/* Bottom Sub-bar */}
         <div className="mt-12 pt-8 border-t border-[#252926] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#8F8372]">
           <div>
-            <p>© {new Date().getFullYear()} RentBridge Nigeria Ltd. All Rights Reserved.</p>
+            <p>
+              © {new Date().getFullYear()} RentBridge Nigeria Ltd. All Rights Reserved. •{' '}
+              <Link href="/privacy" className="text-[#8AE0B3] hover:underline font-semibold cursor-pointer">
+                Privacy Policy & Anti-Agent Shield
+              </Link>
+            </p>
             <p className="text-[11px] text-[#A69B8D] mt-0.5">
               Headquarters / Operating Desks: Lekki Phase 1 • Ikoyi • Victoria Island • Ikeja GRA • Yaba
             </p>
