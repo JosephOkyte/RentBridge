@@ -336,7 +336,7 @@ function GetStartedContent() {
 
       {/* Footer */}
       <footer className="border-t border-[#E8DFC8] py-6 bg-white/50 text-center text-xs text-[#8F8372]">
-        <p>© 2026 RentBridge Nigeria. All rights reserved. Zero Middleman Commission Marketplace.</p>
+        <p>© {new Date().getFullYear()} RentBridge Nigeria Ltd. All rights reserved. Zero Middleman Commission Marketplace.</p>
       </footer>
     </div>
   );

@@ -154,7 +154,7 @@ export default function AdminDashboardPage() {
         <div className="relative z-10 max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-600/20 text-red-400 border border-red-500/30 text-xs font-black uppercase tracking-wider">
             <Lock className="w-3.5 h-3.5" />
-            <span>Super Admin Citadel (/dashboard/admin)</span>
+            <span>Platform Operations & Anti-Fraud Citadel</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">

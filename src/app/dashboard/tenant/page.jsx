@@ -75,7 +75,7 @@ export default function TenantDashboardPage() {
         <div className="relative z-10 max-w-2xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[#8AE0B3] text-xs font-bold uppercase tracking-wider border border-white/10">
             <ShieldCheck className="w-4 h-4" />
-            <span>Dedicated Tenant Sanctuary (/dashboard/tenant)</span>
+            <span>Verified Tenant Sanctuary</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
