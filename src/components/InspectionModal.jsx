@@ -262,9 +262,10 @@ export default function InspectionModal({ property, onClose }) {
                 <button
                   type="button"
                   onClick={handlePrintSlip}
-                  className="py-3 px-3 rounded-xl bg-white hover:bg-[#F5EFEB] border border-[#E8DFC8] text-[#151816] text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all">
-                  <Printer className="w-3.5 h-3.5 text-[#2D5A43]" />
-                  <span>Print Pass (PDF)</span>
+                  className="py-3 px-3 rounded-xl bg-white hover:bg-[#F5EFEB] border border-[#E8DFC8] text-[#151816] text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-all"
+                  title="Print or Save Gate Pass Voucher as PDF">
+                  <Download className="w-3.5 h-3.5 text-[#2D5A43]" />
+                  <span>Download Pass (PDF)</span>
                 </button>
 
                 <button
