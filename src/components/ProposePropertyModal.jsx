@@ -14,6 +14,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { formatNaira } from '../utils/formatters';
+import { validateRequired, validatePositiveAmount } from '../utils/validation';
 
 export default function ProposePropertyModal({ 
   isOpen, 
@@ -37,19 +38,29 @@ export default function ProposePropertyModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Double-Submission Lock Guard
+    if (loading) return;
     setErrorMessage('');
 
     let propTitle = '';
     let propPrice = 0;
     let propCity = request.city;
 
+    // 2. Client-Side Input Validation (Before Network Request)
     if (selectedPropertyId === 'custom' || myProperties.length === 0) {
-      if (!customTitle.trim()) {
-        setErrorMessage('Please enter the property title or unit description.');
+      const titleCheck = validateRequired(customTitle, 'Property title or unit description', 3);
+      if (!titleCheck.valid) {
+        setErrorMessage(titleCheck.error);
+        return;
+      }
+      const priceCheck = validatePositiveAmount(customPrice, 'Annual Rent Price', 50000);
+      if (!priceCheck.valid) {
+        setErrorMessage(priceCheck.error);
         return;
       }
       propTitle = customTitle.trim();
-      propPrice = Number(customPrice) || 0;
+      propPrice = Number(customPrice);
     } else {
       const match = myProperties.find(p => p.id === selectedPropertyId);
       if (match) {
@@ -59,8 +70,10 @@ export default function ProposePropertyModal({
       }
     }
 
+    // 3. Double-Submission Lock State Activation
     setLoading(true);
 
+    // 4. Try/Catch Error Resilience
     try {
       const payload = {
         requestId: request.id,
@@ -81,14 +94,15 @@ export default function ProposePropertyModal({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit property proposal.');
+        throw new Error(data.error || 'Failed to submit property proposal to RentBridge database.');
       }
 
+      // 5. Success Confirmation Flow
       setSubmittedProposal(data.proposal);
       if (onSuccess) onSuccess(data.proposal);
     } catch (err) {
-      console.error('Proposal submit error:', err);
-      setErrorMessage(err.message || 'Something went wrong submitting your proposal.');
+      console.error('[RentBridge Proposal Submit Error]:', err);
+      setErrorMessage(err.message || 'Something went wrong submitting your proposal. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -289,7 +303,7 @@ export default function ProposePropertyModal({
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
-                      <span>Transmitting Proposal...</span>
+                      <span>Transmitting Proposal to Database...</span>
                     </>
                   ) : (
                     <>

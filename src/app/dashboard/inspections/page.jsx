@@ -44,6 +44,7 @@ export default function InspectionsPage() {
   const [alternateTimeSlot, setAlternateTimeSlot] = useState('11:00 AM');
   const [alternateNotes, setAlternateNotes] = useState('');
   const [processingAction, setProcessingAction] = useState(false);
+  const [processingActionId, setProcessingActionId] = useState(null);
   const [actionSuccessMsg, setActionSuccessMsg] = useState('');
   const [actionErrorMsg, setActionErrorMsg] = useState('');
 
@@ -86,12 +87,15 @@ export default function InspectionsPage() {
 
   // Lister: Confirm Slot
   const handleConfirmSlot = async (item) => {
-    if (processingAction) return;
+    // 1. Double-Submission Lock Guard
+    if (processingAction || processingActionId) return;
     setProcessingAction(true);
+    setProcessingActionId(item.id);
     setActionSuccessMsg('');
     setActionErrorMsg('');
 
     try {
+      // 3. Try/Catch Error Resilience
       const res = await fetch('/api/inspections', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -104,13 +108,15 @@ export default function InspectionsPage() {
       if (!res.ok) {
         throw new Error(data.error || 'Failed to confirm viewing slot in database.');
       }
+      // 4. Success Confirmation Flow
       setActionSuccessMsg(data.message || 'Viewing slot confirmed successfully!');
       loadData();
     } catch (err) {
       console.error('[RentBridge Confirm Slot Error]:', err);
-      setActionErrorMsg(err.message || 'Network error occurred while confirming slot.');
+      setActionErrorMsg(err.message || 'Network error occurred while confirming slot. Please retry.');
     } finally {
       setProcessingAction(false);
+      setProcessingActionId(null);
     }
   };
 
@@ -127,17 +133,29 @@ export default function InspectionsPage() {
   // Lister: Submit Alternate Time
   const handleSubmitAlternate = async (e) => {
     e.preventDefault();
+    // 1. Double-Submission Lock Guard
     if (processingAction) return;
 
+    // 2. Client-Side Input Validation (Before Network Request)
     if (!alternateDate) {
       setActionErrorMsg('Please select a proposed alternative date.');
       return;
     }
 
+    const selectedDate = new Date(alternateDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      setActionErrorMsg('Proposed alternate date must be today or a future date.');
+      return;
+    }
+
+    // 3. Double-Submission Lock State Activation
     setProcessingAction(true);
     setActionErrorMsg('');
 
     try {
+      // 4. Try/Catch Error Resilience
       const res = await fetch('/api/inspections', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -151,14 +169,15 @@ export default function InspectionsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit alternate proposal.');
+        throw new Error(data.error || 'Failed to submit alternate proposal to database.');
       }
+      // 5. Success Confirmation Flow
       setActionSuccessMsg(data.message || 'Alternate time proposal sent to tenant!');
       setAlternateModalOpen(false);
       loadData();
     } catch (err) {
       console.error('[RentBridge Alternate Submit Error]:', err);
-      setActionErrorMsg(err.message || 'Network error transmitting proposal.');
+      setActionErrorMsg(err.message || 'Network error transmitting proposal. Please retry.');
     } finally {
       setProcessingAction(false);
     }
@@ -166,12 +185,15 @@ export default function InspectionsPage() {
 
   // Tenant: Accept Alternate Time
   const handleAcceptAlternate = async (item) => {
-    if (processingAction) return;
+    // 1. Double-Submission Lock Guard
+    if (processingAction || processingActionId) return;
     setProcessingAction(true);
+    setProcessingActionId(item.id);
     setActionSuccessMsg('');
     setActionErrorMsg('');
 
     try {
+      // 3. Try/Catch Error Resilience
       const res = await fetch('/api/inspections', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -182,15 +204,17 @@ export default function InspectionsPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to accept alternate time.');
+        throw new Error(data.error || 'Failed to accept alternate time in database.');
       }
+      // 4. Success Confirmation Flow
       setActionSuccessMsg(data.message || 'Alternate viewing time confirmed!');
       loadData();
     } catch (err) {
       console.error('[RentBridge Accept Alternate Error]:', err);
-      setActionErrorMsg(err.message || 'Network error accepting slot.');
+      setActionErrorMsg(err.message || 'Network error accepting slot. Please retry.');
     } finally {
       setProcessingAction(false);
+      setProcessingActionId(null);
     }
   };
 
@@ -399,9 +423,16 @@ export default function InspectionsPage() {
                       </p>
                       <button
                         onClick={() => handleAcceptAlternate(item)}
-                        disabled={processingAction}
-                        className="px-4 py-2 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold cursor-pointer transition-all">
-                        Accept Alternate Viewing Time
+                        disabled={!!processingActionId || processingAction}
+                        className="px-4 py-2 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-60 text-white text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5">
+                        {processingActionId === item.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8AE0B3]" />
+                            <span>Locking in Slot to Database...</span>
+                          </>
+                        ) : (
+                          <span>Accept Alternate Viewing Time</span>
+                        )}
                       </button>
                     </div>
                   )}
@@ -430,10 +461,19 @@ export default function InspectionsPage() {
                       <div className="space-y-2">
                         <button
                           onClick={() => handleConfirmSlot(item)}
-                          disabled={processingAction}
-                          className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Confirm Slot</span>
+                          disabled={!!processingActionId || processingAction}
+                          className="w-full py-2.5 rounded-xl bg-[#2D5A43] hover:bg-[#1E3F2F] disabled:opacity-60 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer">
+                          {processingActionId === item.id ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-[#8AE0B3]" />
+                              <span>Confirming to Database...</span>
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Confirm Slot</span>
+                            </>
+                          )}
                         </button>
 
                         <button

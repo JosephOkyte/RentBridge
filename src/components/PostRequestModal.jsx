@@ -21,6 +21,12 @@ import {
   Tag
 } from 'lucide-react';
 import { formatNaira } from '../utils/formatters';
+import { 
+  validateRequired, 
+  validateNigerianPhone, 
+  validateEmail, 
+  validatePositiveAmount 
+} from '../utils/validation';
 
 const POPULAR_LOCATIONS = {
   lagos: ['Lekki Phase 1', 'Admiralty Way', 'Ikate Elegushi', 'Chevron Drive', 'Victoria Island', 'Yaba / Mainland', 'Ikeja GRA'],
@@ -107,29 +113,45 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. Double-Submission Lock Guard
+    if (loading) return;
     setErrorMessage('');
 
-    // Validation
-    if (!formData.seekerName.trim()) {
-      setErrorMessage('Please enter your full name.');
+    // 2. Client-Side Input Validation (Before Network Request)
+    const nameCheck = validateRequired(formData.seekerName, 'Full Name', 2);
+    if (!nameCheck.valid) {
+      setErrorMessage(nameCheck.error);
       return;
     }
 
-    const cleanPhone = formData.seekerPhone.replace(/\s+/g, '');
-    const phoneRegex = /^(\+?234|0)[789][01]\d{8}$/;
-    if (!phoneRegex.test(cleanPhone)) {
-      setErrorMessage('Please enter a valid 11-digit Nigerian phone number (e.g. 0803 123 4567 or +234 803 123 4567).');
+    const phoneCheck = validateNigerianPhone(formData.seekerPhone);
+    if (!phoneCheck.valid) {
+      setErrorMessage(phoneCheck.error);
       return;
     }
 
-    if (!formData.seekerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.seekerEmail)) {
-      setErrorMessage('Please enter a valid email address.');
+    const emailCheck = validateEmail(formData.seekerEmail);
+    if (!emailCheck.valid) {
+      setErrorMessage(emailCheck.error);
+      return;
+    }
+
+    const minRentCheck = validatePositiveAmount(formData.minBudget, 'Minimum Annual Rent Budget', 50000);
+    if (!minRentCheck.valid) {
+      setErrorMessage(minRentCheck.error);
+      return;
+    }
+
+    const maxRentCheck = validatePositiveAmount(formData.maxBudget, 'Maximum Annual Rent Budget', 50000);
+    if (!maxRentCheck.valid) {
+      setErrorMessage(maxRentCheck.error);
       return;
     }
 
     const min = Number(formData.minBudget) || 0;
     const max = Number(formData.maxBudget) || 0;
-    if (max <= 0 || max < min) {
+    if (max < min) {
       setErrorMessage('Maximum annual rent budget must be equal to or greater than minimum budget.');
       return;
     }
@@ -139,13 +161,15 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
       return;
     }
 
+    // 3. Double-Submission Lock State Activation
     setLoading(true);
 
+    // 4. Try/Catch Error Resilience
     try {
       const propTypeObj = PROPERTY_TYPES.find((p) => p.id === formData.propertyType);
       const payload = {
         seekerName: formData.seekerName.trim(),
-        seekerPhone: cleanPhone,
+        seekerPhone: phoneCheck.normalized,
         seekerEmail: formData.seekerEmail.trim().toLowerCase(),
         city: formData.city,
         preferredLocations: formData.preferredLocations.length > 0 ? formData.preferredLocations : ['Flexible within hub'],
@@ -167,13 +191,14 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to submit housing request.');
+        throw new Error(data.error || 'Failed to submit housing request to RentBridge database.');
       }
 
+      // 5. Success Confirmation Flow
       setSubmittedTicket(data.request);
       if (onSuccess) onSuccess(data.request);
     } catch (err) {
-      console.error('Request submission error:', err);
+      console.error('[RentBridge Housing Request Error]:', err);
       setErrorMessage(err.message || 'Something went wrong submitting your request. Please try again.');
     } finally {
       setLoading(false);
@@ -617,7 +642,7 @@ export default function PostRequestModal({ isOpen, onClose, onSuccess }) {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-[#8AE0B3]" />
-                      <span>Transmitting Ticket to Landlords...</span>
+                      <span>Transmitting Ticket to Database...</span>
                     </>
                   ) : (
                     <>

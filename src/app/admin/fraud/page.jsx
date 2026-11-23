@@ -13,12 +13,15 @@ import {
   ShieldCheck,
   Search,
   ExternalLink,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 
 export default function AntiFraudDeskPage() {
   const [incidents, setIncidents] = useState([]);
   const [actionNotice, setActionNotice] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   useEffect(() => {
     fetch('/api/admin/audit')
@@ -31,9 +34,48 @@ export default function AntiFraudDeskPage() {
       .catch(console.error);
   }, []);
 
-  const handleBlacklist = (incidentId, accusedPhone) => {
-    setIncidents(incidents.filter((i) => i.id !== incidentId));
-    setActionNotice(`Telephone ${accusedPhone} has been permanently blacklisted across Nigeria. Associated listings frozen.`);
+  const handleBlacklist = async (incident) => {
+    // 1. Double-Submission Lock Guard
+    if (actionLoadingId || !incident) return;
+    setActionLoadingId(incident.id);
+    setActionNotice('');
+    setActionError('');
+
+    // 2. Client-Side Input Validation
+    if (!incident.accusedPhone) {
+      setActionError('Cannot blacklist: Accused phone number is missing from incident record.');
+      setActionLoadingId(null);
+      return;
+    }
+
+    try {
+      // 3. Try/Catch Error Resilience
+      const res = await fetch('/api/admin/audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'blacklist',
+          userPhone: incident.accusedPhone,
+          userName: incident.accusedLister || 'Rogue Lister',
+          propertyTitle: incident.propertyTitle || 'Reported Property',
+          reason: `Zero Inspection Fee Extortion Report: ${incident.complaint}`,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to blacklist telephone in national database.');
+      }
+
+      // 4. Success Confirmation Flow
+      setIncidents((prev) => prev.filter((i) => i.id !== incident.id));
+      setActionNotice(data.message || `Telephone ${incident.accusedPhone} has been permanently blacklisted across Nigeria. Associated listings frozen.`);
+    } catch (err) {
+      console.error('[Anti-Fraud Blacklist Error]:', err);
+      setActionError(err.message || 'Network error occurred while applying blacklist. Please retry.');
+    } finally {
+      setActionLoadingId(null);
+    }
   };
 
   return (
@@ -64,6 +106,13 @@ export default function AntiFraudDeskPage() {
         <div className="p-4 rounded-2xl bg-[#EBF2ED] border border-[#2D5A43] text-xs font-bold text-[#1E3F2F] flex items-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-[#2D5A43] shrink-0" />
           <span>{actionNotice}</span>
+        </div>
+      )}
+
+      {actionError && (
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-xs font-bold text-red-700 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+          <span>{actionError}</span>
         </div>
       )}
 
@@ -135,16 +184,29 @@ export default function AntiFraudDeskPage() {
               {/* Actions */}
               <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
                 <button
-                  onClick={() => setIncidents(incidents.filter((i) => i.id !== incident.id))}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-[#F5EFEB] border border-[#E8DFC8] text-xs font-bold text-[#4B524D] cursor-pointer">
+                  type="button"
+                  disabled={actionLoadingId === incident.id}
+                  onClick={() => setIncidents((prev) => prev.filter((i) => i.id !== incident.id))}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white hover:bg-[#F5EFEB] disabled:opacity-50 border border-[#E8DFC8] text-xs font-bold text-[#4B524D] cursor-pointer">
                   Dismiss / False Alarm
                 </button>
 
                 <button
-                  onClick={() => handleBlacklist(incident.id, incident.accusedPhone)}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#B91C1C] hover:bg-[#991B1B] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer">
-                  <Ban className="w-4 h-4" />
-                  <span>Freeze Property & Blacklist Telephone</span>
+                  type="button"
+                  disabled={actionLoadingId === incident.id}
+                  onClick={() => handleBlacklist(incident)}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#B91C1C] hover:bg-[#991B1B] disabled:opacity-60 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all">
+                  {actionLoadingId === incident.id ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Freezing & Blacklisting in Database...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Ban className="w-4 h-4" />
+                      <span>Freeze Property & Blacklist Telephone</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

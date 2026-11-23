@@ -56,11 +56,29 @@ export default function ListPropertyModal({ isOpen, onClose }) {
 
   const handleSaveDraft = async (e) => {
     e.preventDefault();
+    // 1. Double-Submission Lock Guard
     if (loading || draftLoading) return;
     setUploadError('');
 
+    // 2. Client-Side Input Validation (Before Network Request)
+    const kindCheck = validateRequired(formData.propertyKind, 'Property Kind / Unit Type', 2);
+    if (!kindCheck.valid) {
+      setUploadError(kindCheck.error);
+      return;
+    }
+
+    if (formData.phone && formData.phone.trim()) {
+      const phoneCheck = validateNigerianPhone(formData.phone);
+      if (!phoneCheck.valid) {
+        setUploadError(phoneCheck.error);
+        return;
+      }
+    }
+
+    // 3. Double-Submission Lock State Activation
     setDraftLoading(true);
     try {
+      // 4. Try/Catch Error Resilience
       const res = await fetch('/api/properties', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -88,6 +106,7 @@ export default function ListPropertyModal({ isOpen, onClose }) {
         throw new Error(data.error || 'Failed to save draft to RentBridge database');
       }
 
+      // 5. Success Confirmation Flow
       setDraftSaved(true);
     } catch (err) {
       console.error('[RentBridge Save Draft Error]:', err);
