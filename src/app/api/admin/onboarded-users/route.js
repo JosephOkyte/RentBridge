@@ -152,13 +152,68 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden: Admin clearance required to access user database.' }, { status: 403 });
     }
 
-    // Fetch all 4 sheets in parallel
-    const [landlords, caretakers, lawyers, tenants] = await Promise.all([
+    // Fetch all 4 Google Sheets in parallel + Supabase profiles fallback
+    const [landlords, caretakers, lawyers, tenants, supabaseProfiles] = await Promise.all([
       fetchSheetData('Landlord'),
       fetchSheetData('Caretaker'),
       fetchSheetData('Lawyers'),
-      fetchSheetData('Tenants')
+      fetchSheetData('Tenants'),
+      (async () => {
+        try {
+          const adminClient = createAdminClient();
+          const { data } = await adminClient
+            .from('profiles')
+            .select('id, email, full_name, phone, role, created_at, updated_at')
+            .in('role', ['landlord', 'caretaker', 'lawyer', 'tenant']);
+          return data || [];
+        } catch (err) {
+          console.warn('[Onboarded Users Supabase fallback error]:', err.message);
+          return [];
+        }
+      })(),
     ]);
+
+    const existingEmails = new Set(
+      [...landlords, ...caretakers, ...lawyers, ...tenants]
+        .map((r) => (r.email || '').toLowerCase().trim())
+        .filter(Boolean)
+    );
+
+    const roleToSheet = {
+      landlord: { list: landlords, label: 'Landlord' },
+      caretaker: { list: caretakers, label: 'Caretaker' },
+      lawyer: { list: lawyers, label: 'Lawyers' },
+      tenant: { list: tenants, label: 'Tenants' },
+    };
+
+    for (const prof of supabaseProfiles) {
+      const emailLower = (prof.email || '').toLowerCase().trim();
+      if (!emailLower || existingEmails.has(emailLower)) continue;
+      existingEmails.add(emailLower);
+
+      const target = roleToSheet[prof.role] || roleToSheet.tenant;
+      const phoneInfo = normalizePhone(prof.phone || '');
+      const isoDate = prof.updated_at || prof.created_at || new Date().toISOString();
+      const d = new Date(isoDate);
+      const displayDate = !isNaN(d.getTime())
+        ? `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+        : 'Recent';
+
+      target.list.push({
+        id: `sb-${prof.id}`,
+        sheetSource: target.label,
+        timestampRaw: isoDate,
+        timestampDisplay: displayDate,
+        submittedAt: isoDate,
+        fullName: prof.full_name || 'Verified User',
+        email: prof.email || '',
+        phoneRaw: phoneInfo.raw,
+        phoneFormatted: phoneInfo.formatted,
+        phoneDial: phoneInfo.dial,
+        category: prof.role ? prof.role.charAt(0).toUpperCase() + prof.role.slice(1) : 'Tenant',
+        note: 'Verified Direct Intake (Synced via RentBridge Portal)',
+      });
+    }
 
     const all = [...landlords, ...caretakers, ...lawyers, ...tenants].sort((a, b) => {
       return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
